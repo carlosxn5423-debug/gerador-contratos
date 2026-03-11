@@ -72,9 +72,10 @@ def remove_yellow_and_fix_bold(xml: str) -> str:
     # ── 1. Remover amarelo ──────────────────────────────────────────────────
     def fix_rpr(m):
         rpr = m.group(0)
-        if 'yellow' not in rpr:
-            return rpr
-        rpr = re.sub(r'<w:highlight[^/]*/>', '', rpr)
+        if 'yellow' in rpr:
+            rpr = re.sub(r'<w:highlight[^/]*/>', '', rpr)
+        # Remove cor vermelha (FF0000) de todos os runs
+        rpr = re.sub(r'<w:color w:val="FF0000"\s*/>', '', rpr)
         return rpr
     xml = re.sub(r'<w:rPr>.*?</w:rPr>', fix_rpr, xml, flags=re.DOTALL)
 
