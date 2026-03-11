@@ -3,182 +3,296 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Gerador de Contratos</title>
+  <meta http-equiv="Cache-Control" content="no-store" />
+  <title>Laquila — Gerador de Contratos</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-    body {
-      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-      background: #f4f6f9; color: #222;
-      min-height: 100vh; display: flex; align-items: flex-start;
-      justify-content: center; padding: 32px 16px 60px;
+
+    :root {
+      --dark:        #1c1a16;
+      --gold:        #c9a84c;
+      --gold-light:  #e8c96d;
+      --gold-bg:     #faf5e4;
+      --gold-border: #e8d9a0;
+      --green:       #3cb96a;
+      --green-dark:  #27a358;
+      --green-bg:    #f0fdf4;
+      --green-border:#bbf7d0;
+      --red-bg:      #fef2f2;
+      --red-border:  #fecaca;
+      --yellow-bg:   #fffbeb;
+      --yellow-border:#fde68a;
+      --info-bg:     #f0f9ff;
+      --info-border: #bae6fd;
+      --info-text:   #0369a1;
+      --text:        #1a1814;
+      --text-2:      #6b6357;
+      --text-3:      #a89d8e;
+      --border:      #e8e3da;
+      --bg:          #f5f3ee;
+      --card:        #ffffff;
+      --radius:      14px;
+      --radius-sm:   9px;
+      --shadow:      0 1px 3px rgba(0,0,0,.05), 0 8px 28px rgba(0,0,0,.08);
     }
-    .container { background: #fff; border-radius: 12px; box-shadow: 0 2px 16px rgba(0,0,0,.08); width: 100%; max-width: 680px; overflow: hidden; }
+
+    body {
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 0 16px 72px;
+    }
+
+    /* ── Topbar ── */
+    .topbar {
+      width: 100%; max-width: 700px;
+      padding: 28px 0 20px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    .brand {
+      display: flex; align-items: center; gap: 10px;
+    }
+    .brand-icon {
+      width: 36px; height: 36px;
+      background: var(--dark);
+      border-radius: 9px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 1rem;
+    }
+    .brand-name {
+      font-size: 1rem; font-weight: 800;
+      color: var(--dark); letter-spacing: .06em; text-transform: uppercase;
+    }
+    .brand-sep { color: var(--text-3); font-size: .8rem; margin: 0 2px; }
+    .brand-sub { font-size: .72rem; font-weight: 500; color: var(--text-3); text-transform: uppercase; letter-spacing: .08em; }
+
+    /* ── Container ── */
+    .container {
+      background: var(--card);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      border: 1px solid rgba(232,227,218,.7);
+      width: 100%; max-width: 700px;
+      overflow: hidden;
+    }
 
     /* ── Tabs ── */
-    .tabs { display: flex; border-bottom: 2px solid #eef0f4; }
-    .tab-btn {
-      flex: 1; padding: 15px 8px; background: none; border: none;
-      font-size: .88rem; font-weight: 600; color: #888; cursor: pointer;
-      border-bottom: 2px solid transparent; margin-bottom: -2px; transition: color .15s;
+    .tabs {
+      display: flex;
+      border-bottom: 1px solid var(--border);
+      background: #faf9f5;
     }
-    .tab-btn.active { color: #4a6cf7; border-bottom-color: #4a6cf7; }
-    .tab-pane { display: none; padding: 30px 40px 36px; }
+    .tab-btn {
+      flex: 1; padding: 15px 8px 13px;
+      background: none; border: none;
+      font-family: inherit; font-size: .82rem; font-weight: 600;
+      color: var(--text-3); cursor: pointer;
+      border-bottom: 2px solid transparent; margin-bottom: -1px;
+      transition: color .15s;
+      display: flex; align-items: center; justify-content: center; gap: 6px;
+    }
+    .tab-btn:hover { color: var(--text-2); }
+    .tab-btn.active { color: var(--dark); border-bottom-color: var(--gold); }
+    .tab-btn svg { width: 14px; height: 14px; flex-shrink: 0; }
+
+    .tab-pane { display: none; padding: 28px 36px 36px; }
     .tab-pane.active { display: block; }
 
-    h2 { font-size: 1.05rem; font-weight: 700; margin-bottom: 4px; }
-    .subtitle { font-size: .83rem; color: #777; margin-bottom: 22px; line-height: 1.5; }
+    /* ── Page title ── */
+    .pane-title { font-size: 1.05rem; font-weight: 700; color: var(--text); letter-spacing: -.02em; }
+    .pane-subtitle { font-size: .82rem; color: var(--text-2); margin-top: 4px; margin-bottom: 26px; line-height: 1.55; }
 
-    /* ── Upload ── */
-    .upload-area {
-      border: 2px dashed #d0d5e8; border-radius: 10px; padding: 32px 20px;
-      text-align: center; cursor: pointer; position: relative;
-      transition: border-color .15s, background .15s;
-    }
-    .upload-area:hover, .upload-area.drag { border-color: #4a6cf7; background: #f5f7ff; }
-    .upload-area input[type=file] { position: absolute; inset: 0; opacity: 0; cursor: pointer; }
-    .upload-icon { font-size: 2rem; margin-bottom: 8px; }
-    .upload-label { font-size: .93rem; font-weight: 600; color: #444; }
-    .upload-hint  { font-size: .78rem; color: #999; margin-top: 4px; }
-    .preview-wrap { margin-top: 14px; display: none; }
-    .preview-wrap img { max-width: 100%; border-radius: 8px; border: 1px solid #e0e4ee; }
-
-    /* ── Missing fields ── */
-    .missing-section {
-      margin-top: 20px; background: #fffbec; border: 1px solid #ffe9a0;
-      border-radius: 9px; padding: 16px 20px; display: none;
-    }
-    .missing-section h3 { font-size: .85rem; font-weight: 700; color: #8a6400; margin-bottom: 12px; }
-    .missing-section .field-group { margin-bottom: 12px; }
-
-    /* ── Buttons ── */
-    .btn-primary {
-      width: 100%; padding: 11px; background: #4a6cf7; color: #fff;
-      font-size: .93rem; font-weight: 600; border: none; border-radius: 8px;
-      cursor: pointer; margin-top: 14px; transition: background .15s; display: none;
-    }
-    .btn-primary:hover { background: #3a5be0; }
-    .btn-primary:disabled { background: #aab4d4; cursor: not-allowed; }
-
-    /* ── Share link ── */
-    .share-box {
-      background: #f5f7ff; border: 1px solid #c5cfff; border-radius: 9px;
-      padding: 16px 20px; margin-top: 18px; display: none;
-    }
-    .share-box h3 { font-size: .83rem; font-weight: 700; color: #3a5be0; margin-bottom: 10px; }
-    .share-tipo { display: flex; gap: 8px; margin-bottom: 12px; flex-wrap: wrap; }
-    .share-tipo select { flex: 1; padding: 8px 10px; border: 1px solid #c5cfff; border-radius: 6px; font-size: .88rem; }
-    .share-tipo button {
-      padding: 8px 16px; background: #4a6cf7; color: #fff; border: none;
-      border-radius: 6px; font-size: .88rem; font-weight: 600; cursor: pointer;
-      white-space: nowrap;
-    }
-    .share-tipo button:hover { background: #3a5be0; }
-    .share-url-wrap { display: none; }
-    .share-url {
-      display: flex; gap: 8px; align-items: center;
-      background: #fff; border: 1px solid #c5cfff; border-radius: 6px; padding: 8px 12px;
-      font-size: .85rem; word-break: break-all;
-    }
-    .share-url span { flex: 1; color: #333; }
-    .copy-btn {
-      padding: 4px 12px; background: #eef2ff; color: #3a5be0; border: none;
-      border-radius: 5px; font-size: .8rem; font-weight: 600; cursor: pointer; white-space: nowrap;
-    }
-    .copy-btn:hover { background: #dde5ff; }
-    .share-note { font-size: .76rem; color: #888; margin-top: 8px; }
-
-    /* ── Form fields ── */
-    .field-group { margin-bottom: 15px; }
-    label { display: block; font-size: .81rem; font-weight: 600; color: #555; margin-bottom: 4px; }
-    input, select {
-      width: 100%; padding: 9px 12px; border: 1px solid #d4d8e0; border-radius: 7px;
-      font-size: .92rem; color: #222; background: #fafbfc;
-      transition: border-color .15s; outline: none;
-    }
-    input:focus, select:focus { border-color: #4a6cf7; background: #fff; }
-    input.filled { border-color: #34c471; background: #f0fdf6; }
+    /* ── Section titles ── */
     .section-title {
-      font-size: .74rem; font-weight: 700; text-transform: uppercase; letter-spacing: .06em;
-      color: #999; margin: 20px 0 11px; padding-bottom: 5px; border-bottom: 1px solid #f0f1f4;
+      display: flex; align-items: center; gap: 8px;
+      font-size: .68rem; font-weight: 700;
+      text-transform: uppercase; letter-spacing: .09em;
+      color: var(--text-3); margin: 24px 0 13px;
     }
-    .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 11px; }
-    .grid-3 { display: grid; grid-template-columns: 2fr 1fr 1fr; gap: 11px; }
+    .section-title::before {
+      content: ''; width: 3px; height: 12px;
+      background: linear-gradient(to bottom, var(--gold), var(--gold-light));
+      border-radius: 2px; flex-shrink: 0;
+    }
+
+    /* ── Fields ── */
+    .field-group { margin-bottom: 13px; }
+    label { display: block; font-size: .76rem; font-weight: 600; color: var(--text-2); margin-bottom: 5px; }
+    input, select {
+      width: 100%; padding: 10px 13px;
+      border: 1.5px solid var(--border); border-radius: var(--radius-sm);
+      font-family: inherit; font-size: .88rem; color: var(--text);
+      background: #fafaf7; transition: border-color .15s, box-shadow .15s, background .15s;
+      outline: none; appearance: none; -webkit-appearance: none;
+    }
+    select {
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%23a89d8e' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
+      background-repeat: no-repeat; background-position: right 12px center; padding-right: 36px; cursor: pointer;
+    }
+    input:focus, select:focus {
+      border-color: var(--gold); background: #fff;
+      box-shadow: 0 0 0 3px rgba(201,168,76,.1);
+    }
+    input.filled { border-color: var(--green); background: var(--green-bg); }
+    input::placeholder { color: var(--text-3); }
+    .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+    .grid-3 { display: grid; grid-template-columns: 2fr 1fr 1fr; gap: 12px; }
     .hidden { display: none !important; }
 
+    /* ── Buttons ── */
+    .btn-row { display: flex; gap: 10px; margin-top: 22px; }
     .btn-generate {
-      width: 100%; padding: 13px; background: #4a6cf7; color: #fff;
-      font-size: .98rem; font-weight: 600; border: none; border-radius: 8px;
-      cursor: pointer; margin-top: 24px; transition: background .15s, transform .1s;
+      flex: 1; padding: 12px 16px;
+      background: var(--dark); color: var(--gold);
+      font-family: inherit; font-size: .88rem; font-weight: 700;
+      border: none; border-radius: var(--radius-sm); cursor: pointer;
+      display: none; transition: background .15s, transform .1s;
+      letter-spacing: .01em; text-align: center;
     }
-    .btn-generate:hover { background: #3a5be0; }
+    .btn-generate:hover { background: #272319; }
     .btn-generate:active { transform: scale(.98); }
-    .btn-generate:disabled { background: #aab4d4; cursor: not-allowed; }
+    .btn-generate:disabled { background: #d1cec7; color: #a89d8e; cursor: not-allowed; }
 
     /* ── Messages ── */
-    .msg { margin-top: 12px; padding: 10px 14px; border-radius: 7px; font-size: .86rem; display: none; }
-    .msg.success { background: #e6f9ee; color: #1a6e3a; border: 1px solid #b3e8c6; display: block; }
-    .msg.error   { background: #fdecea; color: #c0392b; border: 1px solid #f5b4ae; display: block; }
-    .msg.info    { background: #eef2ff; color: #3a5be0; border: 1px solid #c5cfff; display: block; }
-    .msg.warn    { background: #fffbec; color: #8a6400; border: 1px solid #ffe9a0; display: block; }
-
-    /* ── Submissions ── */
-    .submission-card {
-      border: 1px solid #e8ebf4; border-radius: 9px; padding: 14px 18px;
-      margin-bottom: 12px; cursor: pointer; transition: border-color .15s, box-shadow .15s;
+    .msg {
+      margin-top: 14px; padding: 11px 15px; border-radius: 8px;
+      font-size: .82rem; font-weight: 500; display: none; line-height: 1.5;
     }
-    .submission-card:hover { border-color: #4a6cf7; box-shadow: 0 2px 8px rgba(74,108,247,.1); }
-    .submission-card .card-top { display: flex; justify-content: space-between; align-items: center; }
-    .submission-card .card-name { font-weight: 700; font-size: .93rem; }
-    .submission-card .card-tipo { font-size: .78rem; background: #eef2ff; color: #3a5be0; padding: 2px 8px; border-radius: 20px; }
-    .submission-card .card-date { font-size: .78rem; color: #999; margin-top: 4px; }
-    .submission-card .card-status { font-size: .78rem; color: #34c471; margin-top: 2px; }
-    .empty-state { text-align: center; padding: 32px 0; color: #aaa; font-size: .9rem; }
+    .msg.success { background: var(--green-bg); color: #15803d; border: 1px solid var(--green-border); display: block; }
+    .msg.error   { background: var(--red-bg);   color: #b91c1c; border: 1px solid var(--red-border);   display: block; }
+    .msg.info    { background: var(--info-bg);  color: var(--info-text); border: 1px solid var(--info-border); display: block; }
+    .msg.warn    { background: var(--yellow-bg); color: #92400e; border: 1px solid var(--yellow-border); display: block; }
+
+    /* ── Share box ── */
+    .share-box {
+      background: var(--gold-bg); border: 1.5px solid var(--gold-border);
+      border-radius: 12px; padding: 20px 22px;
+    }
+    .share-box-title {
+      font-size: .79rem; font-weight: 700; color: #7a5c10;
+      margin-bottom: 14px; display: flex; align-items: center; gap: 6px;
+    }
+    .share-tipo { display: flex; gap: 10px; flex-wrap: wrap; }
+    .share-tipo select { flex: 1; background-color: #fff; border-color: var(--gold-border); }
+    .share-tipo select:focus { border-color: var(--gold); }
+    .share-tipo button {
+      padding: 10px 18px; background: var(--dark); color: var(--gold);
+      border: none; border-radius: 8px; font-family: inherit;
+      font-size: .83rem; font-weight: 700; cursor: pointer; white-space: nowrap;
+      transition: background .15s;
+    }
+    .share-tipo button:hover { background: #272319; }
+    .share-url-wrap { margin-top: 14px; display: none; }
+    .share-url {
+      display: flex; gap: 8px; align-items: center;
+      background: #fff; border: 1.5px solid var(--gold-border);
+      border-radius: 8px; padding: 10px 14px; font-size: .82rem;
+    }
+    .share-url span { flex: 1; color: var(--text); word-break: break-all; }
+    .copy-btn {
+      padding: 6px 14px; background: var(--dark); color: var(--gold);
+      border: none; border-radius: 6px; font-family: inherit;
+      font-size: .76rem; font-weight: 700; cursor: pointer; white-space: nowrap;
+      flex-shrink: 0; transition: background .15s;
+    }
+    .copy-btn:hover { background: #272319; }
+    .share-note { font-size: .72rem; color: var(--text-3); margin-top: 8px; line-height: 1.5; }
+
+    /* ── Submission cards ── */
+    .submission-card {
+      display: flex; align-items: center; gap: 13px;
+      border: 1.5px solid var(--border); border-radius: 11px;
+      padding: 13px 15px; margin-bottom: 10px; cursor: pointer;
+      transition: border-color .15s, box-shadow .15s, background .15s;
+    }
+    .submission-card:hover {
+      border-color: var(--gold); background: #fdfaf2;
+      box-shadow: 0 2px 12px rgba(201,168,76,.1);
+    }
+    .card-avatar {
+      width: 38px; height: 38px; background: var(--dark);
+      border-radius: 9px; display: flex; align-items: center; justify-content: center;
+      color: var(--gold); font-size: .78rem; font-weight: 800;
+      flex-shrink: 0; text-transform: uppercase; letter-spacing: .04em;
+    }
+    .card-body { flex: 1; min-width: 0; }
+    .card-name { font-weight: 700; font-size: .88rem; color: var(--text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .card-meta { display: flex; gap: 8px; align-items: center; margin-top: 3px; flex-wrap: wrap; }
+    .card-tipo {
+      font-size: .67rem; font-weight: 700; text-transform: uppercase; letter-spacing: .05em;
+      background: var(--dark); color: var(--gold); padding: 2px 7px; border-radius: 20px;
+    }
+    .card-date { font-size: .72rem; color: var(--text-3); }
+    .card-arrow { color: var(--text-3); font-size: 1rem; flex-shrink: 0; }
+
+    .empty-state { text-align: center; padding: 44px 0; color: var(--text-3); }
+    .empty-state-icon { font-size: 2.2rem; margin-bottom: 10px; opacity: .4; }
+    .empty-state-text { font-size: .85rem; }
+
+    /* Badge */
+    .tab-badge {
+      display: none; align-items: center; justify-content: center;
+      min-width: 17px; height: 17px; padding: 0 4px;
+      background: #ef4444; color: #fff; border-radius: 20px;
+      font-size: .65rem; font-weight: 700;
+    }
+
+    @media (max-width: 600px) {
+      .tab-pane { padding: 22px 20px 30px; }
+      .grid-2, .grid-3 { grid-template-columns: 1fr; }
+      .btn-row { flex-direction: column; }
+      .topbar { padding: 20px 0 16px; }
+    }
   </style>
 </head>
 <body>
+
+<div class="topbar">
+  <div class="brand">
+    <div class="brand-icon">📄</div>
+    <span class="brand-name">Laquila</span>
+    <span class="brand-sep">·</span>
+    <span class="brand-sub">Contratos</span>
+  </div>
+</div>
+
 <div class="container">
 
   <div class="tabs">
-    <button class="tab-btn active" data-tab="tab-print">📸 Via Print</button>
-    <button class="tab-btn"        data-tab="tab-form">📝 Manual</button>
-    <button class="tab-btn"        data-tab="tab-link">🔗 Gerar Link</button>
-    <button class="tab-btn"        data-tab="tab-inbox">📥 Respostas <span id="badgeCount" style="display:none;background:#f04;color:#fff;border-radius:20px;padding:1px 7px;font-size:.72rem;margin-left:4px"></span></button>
+    <button class="tab-btn active" data-tab="tab-form">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/></svg>
+      Manual
+    </button>
+    <button class="tab-btn" data-tab="tab-link">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>
+      Gerar Link
+    </button>
+    <button class="tab-btn" data-tab="tab-inbox">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 12 16 12 14 15 10 15 8 12 2 12"/><path d="M5.45 5.11L2 12v6a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-6l-3.45-6.89A2 2 0 0 0 16.76 4H7.24a2 2 0 0 0-1.79 1.11z"/></svg>
+      Respostas
+      <span id="badgeCount" class="tab-badge"></span>
+    </button>
   </div>
 
-  <!-- ─── TAB 1: Print ClickUp ─── -->
-  <div class="tab-pane active" id="tab-print">
-    <h2>Importar dados do ClickUp</h2>
-    <p class="subtitle">Envie o print da tarefa — a IA extrai os dados e preenche o formulário.<br>Os campos que não forem encontrados aparecem abaixo para você completar.</p>
-
-    <div class="upload-area" id="uploadArea">
-      <input type="file" id="fileInput" accept="image/*" />
-      <div class="upload-icon">🖼️</div>
-      <div class="upload-label">Clique ou arraste o print aqui</div>
-      <div class="upload-hint">PNG, JPG, WEBP — máx. 20 MB</div>
-    </div>
-
-    <div class="preview-wrap" id="previewWrap"><img id="previewImg" src="" alt="Preview" /></div>
-    <button class="btn-primary" id="btnExtract">✨ Extrair dados com IA</button>
-    <div class="msg" id="msgExtract"></div>
-
-    <!-- Campos faltantes -->
-    <div class="missing-section" id="missingSec">
-      <h3>⚠️ Campos não encontrados no print — preencha manualmente:</h3>
-      <div id="missingFields"></div>
-      <button class="btn-primary" id="btnUseMissing" style="display:block;margin-top:8px">Usar dados e ir para formulário →</button>
-    </div>
-  </div>
-
-  <!-- ─── TAB 2: Formulário Manual ─── -->
-  <div class="tab-pane" id="tab-form">
-    <h2>Preencher contrato</h2>
-    <p class="subtitle">Selecione o tipo e preencha os dados para gerar o contrato.</p>
+  <!-- TAB 1 -->
+  <div class="tab-pane active" id="tab-form">
+    <div class="pane-title">Preencher contrato</div>
+    <p class="pane-subtitle">Selecione o tipo e preencha os dados para gerar o contrato.</p>
 
     <form id="form">
       <div class="field-group">
         <label for="tipo">Tipo de contrato</label>
         <select id="tipo" name="tipo" required>
-          <option value="">Selecione...</option>
+          <option value="">Selecione o tipo...</option>
           <option value="gestor">Gestor de Tráfego Pago</option>
           <option value="lider">Líder Técnico da Equipe Operacional</option>
           <option value="vendedor">Vendedor (Closer) — Modelo OTE</option>
@@ -251,47 +365,30 @@
         </div>
         <div class="field-group"><label>E-mail</label><input name="email" type="email" placeholder="nome@gmail.com" /></div>
 
-        <div id="section-pix" class="hidden">
-          <div class="section-title">Pagamento</div>
-          <div class="field-group"><label>Chave PIX</label><input name="chave_pix" placeholder="CPF, e-mail, telefone ou chave aleatória" /></div>
-        </div>
       </div>
 
-      <!-- Data de assinatura -->
-      <div id="section-data" class="hidden">
-        <div class="section-title">Data de assinatura</div>
-        <div class="grid-3">
-          <div class="field-group">
-            <label>Mês</label>
-            <select name="mes_contrato">
-              <option value="janeiro">Janeiro</option><option value="fevereiro">Fevereiro</option>
-              <option value="março">Março</option><option value="abril">Abril</option>
-              <option value="maio">Maio</option><option value="junho">Junho</option>
-              <option value="julho">Julho</option><option value="agosto">Agosto</option>
-              <option value="setembro">Setembro</option><option value="outubro">Outubro</option>
-              <option value="novembro">Novembro</option><option value="dezembro">Dezembro</option>
-            </select>
-          </div>
-          <div class="field-group"><label>Dia</label><input name="dia_contrato" placeholder="15" /></div>
-          <div class="field-group"><label>Ano</label><input name="ano_contrato" value="2026" /></div>
-        </div>
+      <div id="section-pix" class="hidden">
+        <div class="section-title">Pagamento</div>
+        <div class="field-group"><label>Chave PIX *</label><input name="chave_pix" required placeholder="CPF, e-mail, telefone ou chave aleatória" /></div>
       </div>
 
-      <button type="submit" class="btn-generate hidden" id="btnGerar">⬇ Gerar e baixar contrato</button>
+      <div class="btn-row">
+        <button type="submit" class="btn-generate" id="btnGerar">⬇ Gerar e baixar contrato</button>
+      </div>
       <div class="msg" id="msgForm"></div>
     </form>
   </div>
 
-  <!-- ─── TAB 3: Gerar Link ─── -->
+  <!-- TAB 2 -->
   <div class="tab-pane" id="tab-link">
-    <h2>Enviar formulário para a pessoa</h2>
-    <p class="subtitle">
-      Gere um link único para enviar à pessoa contratada.<br>
-      Ela preenche os dados dela e você finaliza com salário e data de pagamento.
-    </p>
+    <div class="pane-title">Gerar link público</div>
+    <p class="pane-subtitle">Envie o formulário para a pessoa contratada preencher os dados dela.</p>
 
-    <div class="share-box" style="display:block">
-      <h3>🔗 Selecione o tipo de contrato e gere o link</h3>
+    <div class="share-box">
+      <div class="share-box-title">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>
+        Selecione o tipo e gere o link
+      </div>
       <div class="share-tipo">
         <select id="shareTipo">
           <option value="">Selecione o tipo...</option>
@@ -300,25 +397,23 @@
           <option value="vendedor">Vendedor (Closer) — Modelo OTE</option>
           <option value="sdr">SDR — Modelo OTE</option>
         </select>
-        <button id="btnGerarLink">Gerar link público</button>
+        <button id="btnGerarLink">Gerar link</button>
       </div>
-
       <div class="share-url-wrap" id="shareUrlWrap">
         <div class="share-url">
           <span id="shareUrlText"></span>
           <button class="copy-btn" id="copyBtn">Copiar</button>
         </div>
-        <div class="share-note">⚠️ O link fica ativo enquanto o servidor estiver rodando. Ao reiniciar, gere um novo link.</div>
+        <div class="share-note">⚠️ O link fica ativo enquanto o servidor estiver rodando.</div>
       </div>
     </div>
-
     <div class="msg" id="msgLink"></div>
   </div>
 
-  <!-- ─── TAB 4: Respostas ─── -->
+  <!-- TAB 3 -->
   <div class="tab-pane" id="tab-inbox">
-    <h2>Respostas recebidas</h2>
-    <p class="subtitle">Clique em uma resposta para carregar os dados no formulário e gerar o contrato.</p>
+    <div class="pane-title">Respostas recebidas</div>
+    <p class="pane-subtitle">Clique em uma resposta para carregar os dados no formulário.</p>
     <div id="submissionsList"></div>
     <div class="msg" id="msgInbox"></div>
   </div>
@@ -326,10 +421,8 @@
 </div>
 
 <script>
-// ── Utilitários ───────────────────────────────
 const $ = id => document.getElementById(id)
 
-// ── Tabs ──────────────────────────────────────
 document.querySelectorAll('.tab-btn').forEach(btn => {
   btn.addEventListener('click', () => {
     document.querySelectorAll('.tab-btn, .tab-pane').forEach(el => el.classList.remove('active'))
@@ -339,251 +432,134 @@ document.querySelectorAll('.tab-btn').forEach(btn => {
   })
 })
 
-// ── Labels amigáveis ──────────────────────────
-const LABELS = {
-  razao_social:'Razão Social', cnpj:'CNPJ', representante:'Representante Legal',
-  cpf:'CPF', telefone:'Telefone', whatsapp:'WhatsApp', email:'E-mail',
-  endereco:'Endereço', logradouro:'Logradouro', numero:'Número', bairro:'Bairro',
-  cidade:'Cidade', uf:'UF', cep:'CEP', chave_pix:'Chave PIX',
-  modalidade:'Modalidade', salario:'Salário (R$)', salario_extenso:'Salário por extenso',
-  dia_pagamento:'Dia de pagamento', dia_pagamento_extenso:'Dia de pagamento (extenso)',
-  dia_contrato:'Dia de assinatura', mes_contrato:'Mês de assinatura', ano_contrato:'Ano'
-}
-
-// ── Upload / Preview ──────────────────────────
-const fileInput   = $('fileInput')
-const uploadArea  = $('uploadArea')
-const previewWrap = $('previewWrap')
-const previewImg  = $('previewImg')
-const btnExtract  = $('btnExtract')
-const msgExtract  = $('msgExtract')
-const missingSec  = $('missingSec')
-const missingFields = $('missingFields')
-
-let selectedFile   = null
-let extractedData  = {}
-
-uploadArea.addEventListener('dragover',  e => { e.preventDefault(); uploadArea.classList.add('drag') })
-uploadArea.addEventListener('dragleave', () => uploadArea.classList.remove('drag'))
-uploadArea.addEventListener('drop', e => {
-  e.preventDefault(); uploadArea.classList.remove('drag')
-  if (e.dataTransfer.files[0]) setFile(e.dataTransfer.files[0])
-})
-fileInput.addEventListener('change', () => { if (fileInput.files[0]) setFile(fileInput.files[0]) })
-
-function setFile(file) {
-  selectedFile = file
-  previewImg.src = URL.createObjectURL(file)
-  previewWrap.style.display = 'block'
-  btnExtract.style.display = 'block'
-  missingSec.style.display = 'none'
-  msgExtract.className = 'msg'
-}
-
-// ── Extrair dados com IA ──────────────────────
-btnExtract.addEventListener('click', async () => {
-  if (!selectedFile) return
-  btnExtract.disabled = true
-  btnExtract.textContent = '✨ Analisando imagem...'
-  msgExtract.className = 'msg info'
-  msgExtract.textContent = 'Enviando para IA... aguarde.'
-  msgExtract.style.display = 'block'
-
-  const fd = new FormData()
-  fd.append('imagem', selectedFile)
-
-  try {
-    const res  = await fetch('/extract', { method: 'POST', body: fd })
-    const body = await res.json()
-    if (!res.ok) throw new Error(body.error || 'Erro desconhecido')
-
-    extractedData = body.dados || {}
-    const faltando = body.faltando || []
-
-    // Mostrar campos faltantes
-    if (faltando.length > 0) {
-      missingFields.innerHTML = ''
-      faltando.forEach(campo => {
-        const div = document.createElement('div')
-        div.className = 'field-group'
-        div.innerHTML = `<label>${LABELS[campo] || campo}</label>
-          <input data-missing="${campo}" placeholder="Preencha manualmente" />`
-        missingFields.appendChild(div)
-      })
-      missingSec.style.display = 'block'
-      msgExtract.className = 'msg warn'
-      msgExtract.textContent = `⚠️ ${faltando.length} campo(s) não encontrado(s) no print. Preencha abaixo.`
-    } else {
-      missingSec.style.display = 'none'
-      aplicarDadosEIrParaForm(extractedData)
-    }
-  } catch (err) {
-    msgExtract.className = 'msg error'
-    msgExtract.textContent = '❌ ' + err.message
-  } finally {
-    btnExtract.disabled = false
-    btnExtract.textContent = '✨ Extrair dados com IA'
-  }
-})
-
-// ── Botão "usar dados com campos manuais" ──────
-$('btnUseMissing').addEventListener('click', () => {
-  // Coletar campos manuais preenchidos
-  document.querySelectorAll('[data-missing]').forEach(el => {
-    if (el.value.trim()) extractedData[el.dataset.missing] = el.value.trim()
-  })
-  aplicarDadosEIrParaForm(extractedData)
-})
-
 function aplicarDadosEIrParaForm(dados) {
-  // Setar tipo
-  if (dados.tipo_contrato) {
-    $('tipo').value = dados.tipo_contrato
-    $('tipo').dispatchEvent(new Event('change'))
-  }
-  // Preencher campos
+  if (dados.tipo_contrato) { $('tipo').value = dados.tipo_contrato; $('tipo').dispatchEvent(new Event('change')) }
   Object.entries(dados).forEach(([key, val]) => {
     if (key === 'tipo_contrato') return
-    document.querySelectorAll(`#form [name="${key}"]`).forEach(el => {
-      el.value = val
-      el.classList.add('filled')
-    })
+    document.querySelectorAll(`#form [name="${key}"]`).forEach(el => { el.value = val; el.classList.add('filled') })
   })
-  // Ir para aba do formulário
   document.querySelectorAll('.tab-btn, .tab-pane').forEach(el => el.classList.remove('active'))
   document.querySelector('[data-tab="tab-form"]').classList.add('active')
   $('tab-form').classList.add('active')
+  const cnpjEl = document.querySelector('#form [name="cnpj"]:not(.hidden)')
+  const rsEl   = document.querySelector('#form [name="razao_social"]:not(.hidden)')
+  if (cnpjEl && cnpjEl.value && rsEl && !rsEl.value) {
+    const s = cnpjEl.closest('#section-pj-full') ? '#section-pj-full' : cnpjEl.closest('#section-pj-ote') ? '#section-pj-ote' : null
+    if (s) buscarCNPJ(cnpjEl.value, s)
+  }
 }
 
-// ── Tipo de contrato → seções ─────────────────
 const tipoSel = $('tipo')
 tipoSel.addEventListener('change', () => {
   const v = tipoSel.value
   $('section-pj-full').classList.toggle('hidden', !['gestor','lider'].includes(v))
   $('section-pj-ote').classList.toggle('hidden',  !['vendedor','sdr'].includes(v))
   $('section-modalidade').classList.toggle('hidden', v !== 'gestor')
-  $('section-pix').classList.toggle('hidden',    v !== 'sdr')
-  $('section-data').classList.toggle('hidden',   !v)
-  $('btnGerar').classList.toggle('hidden',       !v)
+  $('section-pix').classList.toggle('hidden', !v)
+  $('btnGerar').style.display   = v ? 'block' : 'none'
   $('msgForm').className = 'msg'
 })
 
-// ── Gerar contrato ────────────────────────────
+$('form').addEventListener('keydown', e => { if (e.key === 'Enter' && e.target.tagName !== 'TEXTAREA') e.preventDefault() })
+
 $('form').addEventListener('submit', async e => {
   e.preventDefault()
-  const btn = $('btnGerar')
-  btn.disabled = true
-  btn.textContent = 'Gerando...'
+  const btn = $('btnGerar'); btn.disabled = true; btn.textContent = 'Gerando...'
   $('msgForm').className = 'msg'
-
   const data = { tipo: tipoSel.value }
   document.querySelectorAll('#form input, #form select').forEach(el => {
     if (el.name && el.name !== 'tipo' && !el.closest('.hidden')) data[el.name] = el.value.trim()
   })
-
   try {
-    const res = await fetch('/generate', {
-      method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(data)
-    })
+    const res = await fetch('/generate', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(data) })
     if (!res.ok) { const e = await res.json(); throw new Error(e.error) }
-    const blob = await res.blob()
-    const url  = URL.createObjectURL(blob)
-    const a    = document.createElement('a')
-    a.href     = url
-    a.download = res.headers.get('content-disposition')?.match(/filename="(.+)"/)?.[1] || `contrato-${data.tipo}.docx`
-    a.click()
-    URL.revokeObjectURL(url)
-    $('msgForm').textContent = '✅ Contrato gerado e baixado!'
-    $('msgForm').className   = 'msg success'
-  } catch (err) {
-    $('msgForm').textContent = '❌ ' + err.message
-    $('msgForm').className   = 'msg error'
-  } finally {
-    btn.disabled = false
-    btn.textContent = '⬇ Gerar e baixar contrato'
-  }
+    const blob = await res.blob(); const url = URL.createObjectURL(blob); const a = document.createElement('a')
+    a.href = url; a.download = res.headers.get('content-disposition')?.match(/filename="(.+)"/)?.[1] || `contrato-${data.tipo}.docx`
+    a.click(); URL.revokeObjectURL(url)
+    $('msgForm').textContent = '✅ Contrato gerado e baixado!'; $('msgForm').className = 'msg success'
+  } catch (err) { $('msgForm').textContent = '❌ ' + err.message; $('msgForm').className = 'msg error' }
+  finally { btn.disabled = false; btn.textContent = '⬇ Gerar e baixar contrato' }
 })
 
-// ── Gerar link público (localtunnel) ──────────
+
 $('btnGerarLink').addEventListener('click', async () => {
   const tipo = $('shareTipo').value
-  if (!tipo) { $('msgLink').textContent = 'Selecione o tipo de contrato.'; $('msgLink').className = 'msg warn'; return }
-
-  $('btnGerarLink').disabled = true
-  $('btnGerarLink').textContent = 'Gerando...'
-  $('msgLink').className = 'msg info'
-  $('msgLink').textContent = 'Criando link público... pode levar alguns segundos.'
-  $('msgLink').style.display = 'block'
-
+  if (!tipo) { $('msgLink').textContent = 'Selecione o tipo.'; $('msgLink').className = 'msg warn'; return }
+  $('btnGerarLink').disabled = true; $('btnGerarLink').textContent = 'Gerando...'
+  $('msgLink').className = 'msg info'; $('msgLink').textContent = 'Criando link público...'; $('msgLink').style.display = 'block'
   try {
-    const res  = await fetch('/tunnel', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ tipo }) })
-    const body = await res.json()
-    if (!res.ok) throw new Error(body.error)
-
-    $('shareUrlText').textContent = body.url
-    $('shareUrlWrap').style.display = 'block'
-    $('msgLink').className = 'msg success'
-    $('msgLink').textContent = '✅ Link gerado! Copie e envie para a pessoa contratada.'
-  } catch (err) {
-    $('msgLink').textContent = '❌ ' + err.message
-    $('msgLink').className   = 'msg error'
-  } finally {
-    $('btnGerarLink').disabled = false
-    $('btnGerarLink').textContent = 'Gerar link público'
-  }
+    const res = await fetch('/tunnel', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ tipo }) })
+    const body = await res.json(); if (!res.ok) throw new Error(body.error)
+    $('shareUrlText').textContent = body.url; $('shareUrlWrap').style.display = 'block'
+    $('msgLink').className = 'msg success'; $('msgLink').textContent = '✅ Link gerado! Copie e envie para a pessoa contratada.'
+  } catch (err) { $('msgLink').textContent = '❌ ' + err.message; $('msgLink').className = 'msg error' }
+  finally { $('btnGerarLink').disabled = false; $('btnGerarLink').textContent = 'Gerar link' }
 })
 
 $('copyBtn').addEventListener('click', () => {
   navigator.clipboard.writeText($('shareUrlText').textContent)
-  $('copyBtn').textContent = 'Copiado!'
-  setTimeout(() => { $('copyBtn').textContent = 'Copiar' }, 2000)
+  $('copyBtn').textContent = 'Copiado!'; setTimeout(() => { $('copyBtn').textContent = 'Copiar' }, 2000)
 })
 
-// ── Carregar respostas ─────────────────────────
+function getInitials(name) { if (!name) return '?'; return name.split(' ').slice(0,2).map(w=>w[0]).join('').toUpperCase() }
+
 async function loadSubmissions() {
   const list = $('submissionsList')
-  list.innerHTML = '<div style="color:#aaa;text-align:center;padding:20px">Carregando...</div>'
+  list.innerHTML = '<div class="empty-state"><div class="empty-state-icon">⏳</div><div class="empty-state-text">Carregando...</div></div>'
   try {
-    const res  = await fetch('/submissions')
-    const data = await res.json()
-    if (data.length === 0) {
-      list.innerHTML = '<div class="empty-state">📭 Nenhuma resposta recebida ainda.</div>'
-      $('badgeCount').style.display = 'none'
-      return
-    }
-    $('badgeCount').textContent = data.length
-    $('badgeCount').style.display = 'inline'
-    list.innerHTML = data.map(s => `
-      <div class="submission-card" onclick="loadSubmission('${s.id}')">
-        <div class="card-top">
-          <span class="card-name">${s.fields.razao_social || s.fields.representante || 'Sem nome'}</span>
-          <span class="card-tipo">${s.tipo}</span>
-        </div>
-        <div class="card-date">${new Date(s.criadoEm).toLocaleString('pt-BR')}</div>
-      </div>
-    `).join('')
-  } catch (err) {
-    list.innerHTML = '<div class="empty-state">❌ Erro ao carregar respostas.</div>'
-  }
+    const res = await fetch('/submissions'); const data = await res.json()
+    if (data.length === 0) { list.innerHTML = '<div class="empty-state"><div class="empty-state-icon">📭</div><div class="empty-state-text">Nenhuma resposta recebida ainda.</div></div>'; $('badgeCount').style.display = 'none'; return }
+    $('badgeCount').textContent = data.length; $('badgeCount').style.display = 'inline-flex'
+    list.innerHTML = data.map(s => {
+      const nome = s.fields.razao_social || s.fields.representante || 'Sem nome'
+      return `<div class="submission-card" onclick="loadSubmission('${s.id}')"><div class="card-avatar">${getInitials(nome)}</div><div class="card-body"><div class="card-name">${nome}</div><div class="card-meta"><span class="card-tipo">${s.tipo}</span><span class="card-date">${new Date(s.criadoEm).toLocaleString('pt-BR')}</span></div></div><div class="card-arrow">›</div></div>`
+    }).join('')
+  } catch { list.innerHTML = '<div class="empty-state"><div class="empty-state-icon">❌</div><div class="empty-state-text">Erro ao carregar.</div></div>' }
 }
 
 async function loadSubmission(id) {
-  const res  = await fetch(`/submission/${id}`)
-  const sub  = await res.json()
-
+  const res = await fetch(`/submission/${id}`); const sub = await res.json()
   aplicarDadosEIrParaForm({ tipo_contrato: sub.tipo, ...sub.fields })
-
-  $('msgForm').textContent = '📥 Dados carregados da resposta. Adicione salário e data e gere o contrato.'
-  $('msgForm').className   = 'msg info'
-  $('msgForm').style.display = 'block'
+  $('msgForm').textContent = '📥 Dados carregados. Adicione salário e data e gere o contrato.'
+  $('msgForm').className = 'msg info'; $('msgForm').style.display = 'block'
 }
 
-// Badge na carga inicial
-fetch('/submissions').then(r => r.json()).then(data => {
-  if (data.length > 0) {
-    $('badgeCount').textContent = data.length
-    $('badgeCount').style.display = 'inline'
+const UNI=['','um','dois','três','quatro','cinco','seis','sete','oito','nove','dez','onze','doze','treze','quatorze','quinze','dezesseis','dezessete','dezoito','dezenove']
+const DEZ=['','','vinte','trinta','quarenta','cinquenta','sessenta','setenta','oitenta','noventa']
+const CEN=['','cento','duzentos','trezentos','quatrocentos','quinhentos','seiscentos','setecentos','oitocentos','novecentos']
+function grupo(n){if(n===0)return '';if(n===100)return 'cem';let s='';const c=Math.floor(n/100),r=n%100;if(c)s+=CEN[c];if(r){if(s)s+=' e ';if(r<20)s+=UNI[r];else{s+=DEZ[Math.floor(r/10)];if(r%10)s+=' e '+UNI[r%10]}}return s}
+function valorParaExtenso(str){const num=parseFloat(str.replace(/\./g,'').replace(',','.'));if(isNaN(num)||num<=0)return '';const inteiro=Math.floor(num),cents=Math.round((num-inteiro)*100);const partes=[],mi=Math.floor(inteiro/1000000),mil=Math.floor((inteiro%1000000)/1000),res=inteiro%1000;if(mi)partes.push(grupo(mi)+(mi===1?' milhão':' milhões'));if(mil)partes.push(grupo(mil)+' mil');if(res)partes.push(grupo(res));let texto=partes.join(' e ')+(inteiro===1?' real':' reais');if(cents)texto+=' e '+grupo(cents)+(cents===1?' centavo':' centavos');return texto}
+const DIAS_EXT=['','primeiro','dois','três','quatro','cinco','seis','sete','oito','nove','dez','onze','doze','treze','quatorze','quinze','dezesseis','dezessete','dezoito','dezenove','vinte','vinte e um','vinte e dois','vinte e três','vinte e quatro','vinte e cinco','vinte e seis','vinte e sete','vinte e oito','vinte e nove','trinta','trinta e um']
+function diaParaExtenso(str){const n=parseInt(str);return(n>=1&&n<=31)?DIAS_EXT[n]:''}
+document.addEventListener('input',e=>{
+  if(e.target.name==='salario'){const x=document.querySelector('#form [name="salario_extenso"]');if(x)x.value=valorParaExtenso(e.target.value)}
+  if(e.target.name==='dia_pagamento'){const x=document.querySelector('#form [name="dia_pagamento_extenso"]');if(x)x.value=diaParaExtenso(e.target.value)}
+})
+
+async function buscarCNPJ(cnpj,contexto){
+  const limpo=cnpj.replace(/\D/g,'');if(limpo.length!==14)return
+  const ind=document.createElement('span');ind.textContent=' 🔍 buscando...';ind.style.cssText='font-size:.72rem;color:#a89d8e'
+  const campo=document.querySelector(`${contexto} [name="cnpj"]`);if(!campo)return
+  campo.parentNode.appendChild(ind)
+  try{
+    const res=await fetch(`/cnpj/${limpo}`),data=await res.json();if(!res.ok)throw new Error(data.error)
+    const set=(name,val)=>{if(!val)return;const el=document.querySelector(`${contexto} [name="${name}"]`);if(el){el.value=val;el.classList.add('filled')}}
+    set('razao_social',data.razao_social);set('logradouro',data.logradouro);set('numero',data.numero)
+    set('bairro',data.bairro);set('cidade',data.municipio);set('uf',data.uf);set('cep',data.cep)
+    set('endereco',[data.logradouro,data.numero,data.bairro,data.municipio+'/'+data.uf].filter(Boolean).join(', '))
+    ind.textContent=' ✅ '+(data.razao_social||'encontrado');ind.style.color='#3cb96a'
+  }catch{ind.textContent=' ⚠️ não encontrado';ind.style.color='#d97706'}
+  setTimeout(()=>ind.remove(),3000)
+}
+document.addEventListener('blur',e=>{
+  if(e.target.name==='cnpj'){
+    const s=e.target.closest('#section-pj-full')?'#section-pj-full':e.target.closest('#section-pj-ote')?'#section-pj-ote':null
+    if(s)buscarCNPJ(e.target.value,s)
   }
+},true)
+
+fetch('/submissions').then(r=>r.json()).then(data=>{
+  if(data.length>0){$('badgeCount').textContent=data.length;$('badgeCount').style.display='inline-flex'}
 })
 </script>
 </body>

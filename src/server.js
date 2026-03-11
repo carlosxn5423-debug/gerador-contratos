@@ -1,20 +1,25 @@
 require('dotenv').config({ path: require('path').join(__dirname, '../.env') })
 
-const express       = require('express')
-const PizZip        = require('pizzip')
-const Docxtemplater = require('docxtemplater')
-const multer        = require('multer')
-const Anthropic     = require('@anthropic-ai/sdk')
-const { v4: uuidv4 }= require('uuid')
-const path          = require('path')
-const fs            = require('fs')
-const { getClient } = require('./supabase')
+const express                       = require('express')
+const PizZip                        = require('pizzip')
+const Docxtemplater                 = require('docxtemplater')
+const multer                        = require('multer')
+const { randomUUID: uuidv4 }        = require('crypto')
+const path                          = require('path')
+const fs                            = require('fs')
+const { getClient }                 = require('./supabase')
 
 const app    = express()
 const upload = multer({ storage: multer.memoryStorage(), limits: { fileSize: 20 * 1024 * 1024 } })
 
 app.use(express.json({ limit: '20mb' }))
-app.use(express.static(path.join(__dirname, '../public')))
+app.use(express.static(path.join(__dirname, '../public'), {
+  setHeaders: (res, filePath) => {
+    if (filePath.endsWith('.html')) {
+      res.setHeader('Cache-Control', 'no-store')
+    }
+  }
+}))
 
 const TEMPLATES_DIR   = path.join(__dirname, '../templates/processed')
 const SUBMISSIONS_DIR = path.join(__dirname, '../data/submissions')
@@ -27,16 +32,47 @@ if (process.env.VERCEL !== '1') {
 const CAMPOS_OBRIGATORIOS = {
   gestor:   ['razao_social','cnpj','endereco','cep','representante','cpf','telefone','email',
               'modalidade','salario','salario_extenso','dia_pagamento','dia_pagamento_extenso',
-              'dia_contrato','mes_contrato','ano_contrato'],
+              'chave_pix','dia_contrato','mes_contrato','ano_contrato'],
   lider:    ['razao_social','cnpj','endereco','cep','representante','cpf','telefone','email',
               'salario','salario_extenso','dia_pagamento','dia_pagamento_extenso',
-              'dia_contrato','mes_contrato','ano_contrato'],
+              'chave_pix','dia_contrato','mes_contrato','ano_contrato'],
   vendedor: ['razao_social','cnpj','logradouro','numero','bairro','cidade','uf','cep',
-              'representante','cpf','email','whatsapp','dia_contrato','mes_contrato','ano_contrato'],
+              'representante','cpf','email','whatsapp','chave_pix',
+              'dia_contrato','mes_contrato','ano_contrato'],
   sdr:      ['razao_social','cnpj','logradouro','numero','bairro','cidade','uf','cep',
               'representante','cpf','email','whatsapp','chave_pix',
               'dia_contrato','mes_contrato','ano_contrato'],
 }
+
+const MESES = ['janeiro','fevereiro','março','abril','maio','junho',
+               'julho','agosto','setembro','outubro','novembro','dezembro']
+
+// ─────────────────────────────────────────────
+// GET /cnpj/:numero — busca razão social na Receita
+// ─────────────────────────────────────────────
+app.get('/cnpj/:numero', async (req, res) => {
+  const cnpj = req.params.numero.replace(/\D/g, '')
+  if (cnpj.length !== 14) return res.status(400).json({ error: 'CNPJ inválido' })
+  try {
+    const response = await fetch(`https://brasilapi.com.br/api/cnpj/v1/${cnpj}`, {
+      headers: { 'User-Agent': 'Mozilla/5.0 (compatible; gerador-contratos/1.0)' }
+    })
+    if (!response.ok) return res.status(404).json({ error: 'CNPJ não encontrado' })
+    const data = await response.json()
+    res.json({
+      razao_social: data.razao_social || data.nome_fantasia || '',
+      nome_fantasia: data.nome_fantasia || '',
+      logradouro: data.logradouro || '',
+      numero: data.numero || '',
+      bairro: data.bairro || '',
+      municipio: data.municipio || '',
+      uf: data.uf || '',
+      cep: (data.cep || '').replace(/^(\d{5})(\d{3})$/, '$1-$2'),
+    })
+  } catch (err) {
+    res.status(500).json({ error: 'Erro ao consultar CNPJ: ' + err.message })
+  }
+})
 
 // ─────────────────────────────────────────────
 // POST /generate
@@ -49,14 +85,37 @@ app.post('/generate', (req, res) => {
   if (!fs.existsSync(templatePath))
     return res.status(404).json({ error: `Template "${tipo}" não encontrado` })
 
+  // Nome do cargo por tipo
+  const NOMES_CARGO = {
+    gestor:   'Gestor de Tráfego Pago',
+    lider:    'Líder Técnico da Equipe Operacional',
+    vendedor: 'Representante de Vendas (Closer)',
+    sdr:      'SDR',
+  }
+  if (!fields.nome_cargo) fields.nome_cargo = NOMES_CARGO[tipo] || tipo
+
+  // Chave PIX obrigatória em todos os contratos
+  if (!fields.chave_pix || !fields.chave_pix.trim())
+    return res.status(400).json({ error: 'Chave PIX é obrigatória' })
+
+  // Data de criação automática
+  const hoje = new Date()
+  if (!fields.dia_contrato)  fields.dia_contrato  = String(hoje.getDate())
+  if (!fields.mes_contrato)  fields.mes_contrato  = MESES[hoje.getMonth()]
+  if (!fields.ano_contrato)  fields.ano_contrato  = String(hoje.getFullYear())
+
   try {
     const content = fs.readFileSync(templatePath, 'binary')
     const zip     = new PizZip(content)
-    const doc     = new Docxtemplater(zip, { paragraphLoop: true, linebreaks: true })
+    const doc     = new Docxtemplater(zip, { paragraphLoop: true, linebreaks: true, nullGetter: () => '' })
     doc.render(fields)
     const buffer = doc.getZip().generate({ type: 'nodebuffer' })
-    const nome   = `contrato-${tipo}-${Date.now()}.docx`
-    res.setHeader('Content-Disposition', `attachment; filename="${nome}"`)
+    const TIPOS_NOME = { gestor: 'Gestor de Tráfego Pago', lider: 'Líder Técnico', vendedor: 'Vendedor', sdr: 'SDR' }
+    const tipoNome   = TIPOS_NOME[tipo] || tipo
+    const colaborador = (fields.representante || fields.razao_social || '').replace(/[/\\?%*:|"<>]/g, '-').trim()
+    const nome   = colaborador ? `${tipoNome} - ${colaborador}.docx` : `contrato-${tipo}-${Date.now()}.docx`
+    const nomeAscii = nome.normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+    res.setHeader('Content-Disposition', `attachment; filename="${nomeAscii}"; filename*=UTF-8''${encodeURIComponent(nome)}`)
     res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document')
     res.send(buffer)
   } catch (err) {
@@ -65,77 +124,7 @@ app.post('/generate', (req, res) => {
   }
 })
 
-// ─────────────────────────────────────────────
-// POST /extract — IA analisa print ClickUp
-// ─────────────────────────────────────────────
-app.post('/extract', upload.single('imagem'), async (req, res) => {
-  if (!req.file) return res.status(400).json({ error: 'Nenhuma imagem enviada' })
 
-  const apiKey = process.env.ANTHROPIC_API_KEY
-  if (!apiKey) return res.status(500).json({ error: 'ANTHROPIC_API_KEY não configurada' })
-
-  const client    = new Anthropic({ apiKey })
-  const base64    = req.file.buffer.toString('base64')
-  const mediaType = req.file.mimetype || 'image/png'
-
-  const prompt = `Você está analisando um print de tarefa do ClickUp com dados de uma pessoa a ser contratada.
-
-Extraia TODOS os dados que encontrar e retorne SOMENTE um objeto JSON válido (sem markdown, sem explicações).
-
-Campos possíveis:
-- razao_social: nome da empresa ou pessoa jurídica
-- cnpj: CNPJ no formato XX.XXX.XXX/0001-XX
-- representante: nome completo do representante legal
-- cpf: CPF no formato XXX.XXX.XXX-XX
-- telefone: telefone com DDD
-- email: endereço de e-mail
-- whatsapp: número de WhatsApp com DDD
-- logradouro: nome da rua ou avenida (sem número)
-- numero: número do endereço
-- bairro: bairro
-- cidade: cidade
-- uf: estado (sigla, ex: PR)
-- cep: CEP no formato XX.XXX-XXX
-- endereco: endereço completo (quando não separado em campos)
-- modalidade: modalidade de trabalho (presencial, home office ou híbrido)
-- salario: valor do salário, apenas números e vírgula, ex: 3.000,00
-- salario_extenso: salário por extenso
-- dia_pagamento: dia do mês para pagamento (apenas o número)
-- dia_pagamento_extenso: dia do pagamento por extenso
-- chave_pix: chave PIX
-- tipo_contrato: tipo detectado (gestor, lider, vendedor ou sdr) — inferir pelo cargo mencionado
-
-Retorne apenas os campos encontrados.`
-
-  try {
-    const response = await client.messages.create({
-      model: 'claude-haiku-4-5-20251001',
-      max_tokens: 1024,
-      messages: [{
-        role: 'user',
-        content: [
-          { type: 'image', source: { type: 'base64', media_type: mediaType, data: base64 } },
-          { type: 'text', text: prompt },
-        ],
-      }],
-    })
-
-    const text      = response.content[0].text.trim()
-    const jsonMatch = text.match(/\{[\s\S]*\}/)
-    if (!jsonMatch) return res.status(422).json({ error: 'Não foi possível extrair dados', raw: text })
-
-    const dados   = JSON.parse(jsonMatch[0])
-    const tipo    = dados.tipo_contrato
-    const faltando = tipo
-      ? (CAMPOS_OBRIGATORIOS[tipo] || []).filter(c => !dados[c] || dados[c] === '')
-      : []
-
-    res.json({ dados, faltando })
-  } catch (err) {
-    console.error(err)
-    res.status(500).json({ error: 'Erro na análise: ' + err.message })
-  }
-})
 
 // ─────────────────────────────────────────────
 // GET /fill/:tipo — formulário externo
@@ -203,12 +192,27 @@ app.get('/submission/:id', async (req, res) => {
 })
 
 // ─────────────────────────────────────────────
-// POST /tunnel — cria link público (localtunnel)
+// POST /tunnel — cria link público
+// Prioridade: VERCEL_URL > BASE_URL > localtunnel
 // ─────────────────────────────────────────────
 let activeTunnel = null
 
 app.post('/tunnel', async (req, res) => {
   const { tipo } = req.body
+
+  // 1. Vercel: usa a URL pública automática
+  if (process.env.VERCEL_URL) {
+    const base = `https://${process.env.VERCEL_URL}`
+    return res.json({ url: `${base}/fill/${tipo || ''}`, base })
+  }
+
+  // 2. URL base personalizada (ex: ngrok configurado manualmente)
+  if (process.env.BASE_URL) {
+    const base = process.env.BASE_URL.replace(/\/$/, '')
+    return res.json({ url: `${base}/fill/${tipo || ''}`, base })
+  }
+
+  // 3. Dev local: usa localtunnel
   try {
     if (activeTunnel) { activeTunnel.close(); activeTunnel = null }
     const localtunnel = require('localtunnel')
@@ -222,8 +226,11 @@ app.post('/tunnel', async (req, res) => {
 })
 
 const PORT = process.env.PORT || 3000
-app.listen(PORT, () => {
-  console.log(`✅ Gerador de contratos rodando em http://localhost:${PORT}`)
-})
+
+if (!process.env.VERCEL) {
+  app.listen(PORT, () => {
+    console.log(`✅ Gerador de contratos rodando em http://localhost:${PORT}`)
+  })
+}
 
 module.exports = app

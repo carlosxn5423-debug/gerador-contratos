@@ -63,6 +63,58 @@ VENDEDOR_REPLACEMENTS = [
 ]
 
 
+def remove_yellow_and_fix_bold(xml: str) -> str:
+    """
+    1. Remove highlight amarelo de todos os runs.
+    2. No parágrafo de identificação CONTRATADO/CONTRATADA, o merge coloca
+       tudo num único run bold. Divide em: 'CONTRATADO: ' (bold) + resto (normal).
+    """
+    # ── 1. Remover amarelo ──────────────────────────────────────────────────
+    def fix_rpr(m):
+        rpr = m.group(0)
+        if 'yellow' not in rpr:
+            return rpr
+        rpr = re.sub(r'<w:highlight[^/]*/>', '', rpr)
+        return rpr
+    xml = re.sub(r'<w:rPr>.*?</w:rPr>', fix_rpr, xml, flags=re.DOTALL)
+
+    # ── 2. Dividir run bold do parágrafo de identificação ──────────────────
+    # Padrão: run bold com texto "CONTRATADO: ..." ou "CONTRATADA: ..."
+    LABELS = ('CONTRATADO: ', 'CONTRATADA: ')
+
+    def split_run(m):
+        run = m.group(0)
+        # Só age em runs bold
+        if not (re.search(r'<w:b\b', run)):
+            return run
+        # Extrair texto do run
+        t_match = re.search(r'(<w:t[^>]*>)(.*?)(</w:t>)', run, re.DOTALL)
+        if not t_match:
+            return run
+        text = t_match.group(2)
+        label = next((l for l in LABELS if text.startswith(l)), None)
+        if not label or '{razao_social}' not in text:
+            return run
+
+        # Extrair rPr do run original
+        rpr_match = re.search(r'(<w:rPr>.*?</w:rPr>)', run, re.DOTALL)
+        rpr_bold = rpr_match.group(1) if rpr_match else ''
+        # rPr sem bold para o restante
+        rpr_normal = re.sub(r'<w:b\b[^/]*/>', '', rpr_bold)
+        rpr_normal = re.sub(r'<w:bCs\b[^/]*/>', '', rpr_normal)
+
+        rest = text[len(label):]
+        # Run 1: label em bold
+        run1 = re.sub(r'<w:t[^>]*>.*?</w:t>', f'<w:t xml:space="preserve">{label}</w:t>', run, flags=re.DOTALL)
+        # Run 2: restante sem bold
+        run2 = re.sub(r'<w:rPr>.*?</w:rPr>', rpr_normal, run, flags=re.DOTALL) if rpr_bold else run
+        run2 = re.sub(r'<w:t[^>]*>.*?</w:t>', f'<w:t xml:space="preserve">{rest}</w:t>', run2, flags=re.DOTALL)
+        return run1 + run2
+
+    xml = re.sub(r'<w:r[ >].*?</w:r>', split_run, xml, flags=re.DOTALL)
+    return xml
+
+
 def replace_text_in_xml(xml: str, old: str, new: str) -> str:
     """Substitui texto diretamente no conteúdo de tags <w:t>."""
     # Substitui SOMENTE dentro de tags <w:t>...</w:t>
@@ -156,6 +208,17 @@ def merge_runs_and_replace(input_path: str, output_path: str, field_map: dict):
                     replace_in_para(para, field_map)
 
     doc.save(output_path)
+
+    # Pós-processamento: remover amarelo e corrigir bold via XML
+    with zipfile.ZipFile(output_path, 'r') as zin:
+        files = {name: zin.read(name) for name in zin.namelist()}
+    xml = files['word/document.xml'].decode('utf-8')
+    xml = remove_yellow_and_fix_bold(xml)
+    files['word/document.xml'] = xml.encode('utf-8')
+    with zipfile.ZipFile(output_path, 'w', zipfile.ZIP_DEFLATED) as zout:
+        for name, data in files.items():
+            zout.writestr(name, data)
+
     print(f'  ✓ {os.path.basename(output_path)} (merge mode)')
 
 
@@ -164,7 +227,9 @@ def merge_runs_and_replace(input_path: str, output_path: str, field_map: dict):
 # ──────────────────────────────────────────────────────────
 VENDEDOR_MAP = {
     # Mais específicos primeiro
-    'RAZÃO SOCIAL':               '{razao_social}',
+    'serviços de Representante de Vendas (Closer)': 'serviços de {nome_cargo}',
+    'CONTRATADA: RAZÃO SOCIAL':   'CONTRATADA: {razao_social}',  # corpo do contrato
+    'RAZÃO SOCIAL':               '{representante}',              # assinatura (standalone)
     'NOME DO REPRESENTANTE':      '{representante}',
     'xx.xxx.xxx/0001-xx':         '{cnpj}',
     'Rua/Av xxxxx':               'Rua/Av {logradouro}',
@@ -176,6 +241,8 @@ VENDEDOR_MAP = {
     'xxxxx@gmail.com':            '{email}',
     '(xx) xxxx-xxxx':             '{whatsapp}',
     'Curitiba, XX de XXXXX de 2026': 'Curitiba, {dia_contrato} de {mes_contrato} de {ano_contrato}',
+    '§1°- Os valores apurados podem ser pagos via boleto, PIX, transferência ou depósito bancário, conforme preferência informada pela CONTRATADA e autorizada pela CONTRATANTE.':
+        '§1°- Os valores apurados podem ser pagos via PIX, transferência ou depósito bancário, por meio da chave PIX {chave_pix}.',
 }
 
 SDR_MAP = {
@@ -185,6 +252,8 @@ SDR_MAP = {
 
 
 GESTOR_MAP = {
+    'serviços de Líder Técnico':          'serviços de {nome_cargo}',
+    'CONTRATADA ':                        '{representante}',
     'XXXXXXXXXXXX XXXXXXX XXXXXXX XXXXX': '{razao_social}',
     'XXXXXX XXXXX XXXX XXXXXXX XXX':      '{representante}',
     'XXXXXX@GMAIL.COM':                   '{email}',
@@ -198,6 +267,8 @@ GESTOR_MAP = {
     'XXXXX':                              '{salario}',
     'POR EXTENSO':                        '{salario_extenso}',
     'todo dia X (EXTENSO)':               'todo dia {dia_pagamento} ({dia_pagamento_extenso})',
+    '§1°- Os valores serão pagos via PIX, transferência ou depósito bancário.':
+        '§1°- Os valores serão pagos via PIX, transferência ou depósito bancário, por meio da chave vinculada ao {chave_pix}.',
     'Curitiba, X de XXXX de 2026':        'Curitiba, {dia_contrato} de {mes_contrato} de {ano_contrato}',
 }
 
