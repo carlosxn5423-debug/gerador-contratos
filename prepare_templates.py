@@ -243,11 +243,13 @@ VENDEDOR_MAP = {
     'Curitiba, XX de XXXXX de 2026': 'Curitiba, {dia_contrato} de {mes_contrato} de {ano_contrato}',
     '§1°- Os valores apurados podem ser pagos via boleto, PIX, transferência ou depósito bancário, conforme preferência informada pela CONTRATADA e autorizada pela CONTRATANTE.':
         '§1°- Os valores apurados podem ser pagos via PIX, transferência ou depósito bancário, por meio da chave PIX {chave_pix}.',
+    'até o dia 20 (vinte) do mês subsequente': 'até o dia {dia_pagamento} ({dia_pagamento_extenso}) do mês subsequente',
 }
 
 SDR_MAP = {
     **VENDEDOR_MAP,
     'CHAVE PIX': '{chave_pix}',
+    'todo dia 30 (trinta), posteriormente': 'todo dia {dia_pagamento} ({dia_pagamento_extenso}), posteriormente',
 }
 
 

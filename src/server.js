@@ -38,10 +38,10 @@ const CAMPOS_OBRIGATORIOS = {
               'chave_pix','dia_contrato','mes_contrato','ano_contrato'],
   vendedor: ['razao_social','cnpj','logradouro','numero','bairro','cidade','uf','cep',
               'representante','cpf','email','whatsapp','chave_pix',
-              'dia_contrato','mes_contrato','ano_contrato'],
+              'dia_pagamento','dia_pagamento_extenso','dia_contrato','mes_contrato','ano_contrato'],
   sdr:      ['razao_social','cnpj','logradouro','numero','bairro','cidade','uf','cep',
               'representante','cpf','email','whatsapp','chave_pix',
-              'dia_contrato','mes_contrato','ano_contrato'],
+              'dia_pagamento','dia_pagamento_extenso','dia_contrato','mes_contrato','ano_contrato'],
 }
 
 const MESES = ['janeiro','fevereiro','março','abril','maio','junho',
