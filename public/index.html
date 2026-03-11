@@ -538,8 +538,8 @@ function valorParaExtenso(str){const num=parseFloat(str.replace(/\./g,'').replac
 const DIAS_EXT=['','primeiro','dois','três','quatro','cinco','seis','sete','oito','nove','dez','onze','doze','treze','quatorze','quinze','dezesseis','dezessete','dezoito','dezenove','vinte','vinte e um','vinte e dois','vinte e três','vinte e quatro','vinte e cinco','vinte e seis','vinte e sete','vinte e oito','vinte e nove','trinta','trinta e um']
 function diaParaExtenso(str){const n=parseInt(str);return(n>=1&&n<=31)?DIAS_EXT[n]:''}
 document.addEventListener('input',e=>{
-  if(e.target.name==='salario'){const x=document.querySelector('#form [name="salario_extenso"]');if(x)x.value=valorParaExtenso(e.target.value)}
-  if(e.target.name==='dia_pagamento'){const x=document.querySelector('#form [name="dia_pagamento_extenso"]');if(x)x.value=diaParaExtenso(e.target.value)}
+  if(e.target.name==='salario'){const x=e.target.closest('.grid-2')?.querySelector('[name="salario_extenso"]');if(x)x.value=valorParaExtenso(e.target.value)}
+  if(e.target.name==='dia_pagamento'){const x=e.target.closest('.grid-2')?.querySelector('[name="dia_pagamento_extenso"]');if(x)x.value=diaParaExtenso(e.target.value)}
 })
 
 async function buscarCNPJ(cnpj,contexto){
