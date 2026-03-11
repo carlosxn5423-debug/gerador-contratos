@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Formulário de Dados — Contrato</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      background: #f4f6f9; color: #222;
+      min-height: 100vh; display: flex; align-items: flex-start;
+      justify-content: center; padding: 32px 16px 60px;
+    }
+    .container {
+      background: #fff; border-radius: 12px;
+      box-shadow: 0 2px 16px rgba(0,0,0,.08);
+      padding: 40px 44px; width: 100%; max-width: 580px;
+    }
+    .logo { font-size: 1.3rem; font-weight: 800; color: #4a6cf7; margin-bottom: 4px; }
+    h1 { font-size: 1.15rem; font-weight: 700; margin-bottom: 4px; }
+    .subtitle { font-size: .85rem; color: #777; margin-bottom: 28px; line-height: 1.5; }
+    .section-title {
+      font-size: .75rem; font-weight: 700; text-transform: uppercase;
+      letter-spacing: .06em; color: #999; margin: 22px 0 12px;
+      padding-bottom: 6px; border-bottom: 1px solid #f0f1f4;
+    }
+    .field-group { margin-bottom: 15px; }
+    label { display: block; font-size: .82rem; font-weight: 600; color: #555; margin-bottom: 4px; }
+    input, select {
+      width: 100%; padding: 9px 12px;
+      border: 1px solid #d4d8e0; border-radius: 7px;
+      font-size: .93rem; color: #222; background: #fafbfc;
+      transition: border-color .15s; outline: none;
+    }
+    input:focus, select:focus { border-color: #4a6cf7; background: #fff; }
+    .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+    .grid-3 { display: grid; grid-template-columns: 2fr 1fr 1fr; gap: 12px; }
+    .hidden { display: none !important; }
+    .btn-submit {
+      width: 100%; padding: 13px; background: #4a6cf7; color: #fff;
+      font-size: 1rem; font-weight: 600; border: none; border-radius: 8px;
+      cursor: pointer; margin-top: 26px; transition: background .15s;
+    }
+    .btn-submit:hover { background: #3a5be0; }
+    .btn-submit:disabled { background: #aab4d4; cursor: not-allowed; }
+    .msg {
+      margin-top: 14px; padding: 12px 16px; border-radius: 7px;
+      font-size: .88rem; display: none;
+    }
+    .msg.success { background: #e6f9ee; color: #1a6e3a; border: 1px solid #b3e8c6; display: block; }
+    .msg.error   { background: #fdecea; color: #c0392b; border: 1px solid #f5b4ae; display: block; }
+    .done-state { text-align: center; padding: 20px 0; }
+    .done-icon { font-size: 3rem; margin-bottom: 12px; }
+    .done-title { font-size: 1.2rem; font-weight: 700; margin-bottom: 8px; }
+    .done-sub { font-size: .9rem; color: #666; }
+  </style>
+</head>
+<body>
+<div class="container">
+  <div class="logo">Laquila</div>
+  <h1>Preencha seus dados contratuais</h1>
+  <p class="subtitle">
+    Preencha os campos abaixo com os dados da sua empresa ou pessoa jurídica.<br>
+    Todas as informações serão usadas exclusivamente para elaboração do seu contrato.
+  </p>
+
+  <div id="formWrap">
+    <form id="form">
+      <!-- Gestor / Líder -->
+      <div id="section-pj-full" class="hidden">
+        <div class="section-title">Dados da empresa (PJ)</div>
+        <div class="field-group"><label>Razão Social *</label><input name="razao_social" required placeholder="Ex: João Silva Serviços LTDA" /></div>
+        <div class="grid-2">
+          <div class="field-group"><label>CNPJ *</label><input name="cnpj" required placeholder="XX.XXX.XXX/0001-XX" /></div>
+          <div class="field-group"><label>CEP *</label><input name="cep" required placeholder="80.035-010" /></div>
+        </div>
+        <div class="field-group"><label>Endereço completo *</label><input name="endereco" required placeholder="Rua das Flores, 123, Juvevê, Curitiba/PR" /></div>
+
+        <div class="section-title">Representante Legal</div>
+        <div class="field-group"><label>Nome completo *</label><input name="representante" required placeholder="Ex: João da Silva" /></div>
+        <div class="grid-2">
+          <div class="field-group"><label>CPF *</label><input name="cpf" required placeholder="000.000.000-00" /></div>
+          <div class="field-group"><label>Telefone *</label><input name="telefone" required placeholder="(41) 99999-9999" /></div>
+        </div>
+        <div class="field-group"><label>E-mail *</label><input name="email" type="email" required placeholder="nome@gmail.com" /></div>
+      </div>
+
+      <!-- Vendedor / SDR -->
+      <div id="section-pj-ote" class="hidden">
+        <div class="section-title">Dados da empresa (PJ)</div>
+        <div class="field-group"><label>Razão Social *</label><input name="razao_social" required placeholder="Ex: João Silva Serviços LTDA" /></div>
+        <div class="field-group"><label>CNPJ *</label><input name="cnpj" required placeholder="XX.XXX.XXX/0001-XX" /></div>
+        <div class="field-group"><label>Logradouro (Rua / Av) *</label><input name="logradouro" required placeholder="Rua das Flores" /></div>
+        <div class="grid-3">
+          <div class="field-group"><label>Bairro *</label><input name="bairro" required placeholder="Juvevê" /></div>
+          <div class="field-group"><label>Número *</label><input name="numero" required placeholder="123" /></div>
+          <div class="field-group"><label>CEP *</label><input name="cep" required placeholder="80.035-010" /></div>
+        </div>
+        <div class="grid-2">
+          <div class="field-group"><label>Cidade *</label><input name="cidade" required placeholder="Curitiba" /></div>
+          <div class="field-group"><label>UF *</label><input name="uf" required placeholder="PR" /></div>
+        </div>
+
+        <div class="section-title">Representante Legal</div>
+        <div class="field-group"><label>Nome completo *</label><input name="representante" required placeholder="Ex: João da Silva" /></div>
+        <div class="grid-2">
+          <div class="field-group"><label>CPF *</label><input name="cpf" required placeholder="000.000.000-00" /></div>
+          <div class="field-group"><label>WhatsApp *</label><input name="whatsapp" required placeholder="(41) 99999-9999" /></div>
+        </div>
+        <div class="field-group"><label>E-mail *</label><input name="email" type="email" required placeholder="nome@gmail.com" /></div>
+
+        <div id="section-pix" class="hidden">
+          <div class="section-title">Pagamento</div>
+          <div class="field-group"><label>Chave PIX *</label><input name="chave_pix" required placeholder="CPF, e-mail, telefone ou chave aleatória" /></div>
+        </div>
+      </div>
+
+      <button type="submit" class="btn-submit" id="btnSubmit">Enviar dados</button>
+      <div class="msg" id="msg"></div>
+    </form>
+  </div>
+
+  <div class="done-state hidden" id="doneState">
+    <div class="done-icon">✅</div>
+    <div class="done-title">Dados enviados com sucesso!</div>
+    <div class="done-sub">Seus dados foram recebidos. O contrato será preparado em breve.</div>
+  </div>
+</div>
+
+<script>
+  // Pegar tipo da URL: /fill/gestor, /fill/vendedor etc.
+  const tipo = window.location.pathname.split('/').pop()
+
+  const secFull = document.getElementById('section-pj-full')
+  const secOte  = document.getElementById('section-pj-ote')
+  const secPix  = document.getElementById('section-pix')
+
+  if (['gestor','lider'].includes(tipo)) {
+    secFull.classList.remove('hidden')
+  } else if (['vendedor','sdr'].includes(tipo)) {
+    secOte.classList.remove('hidden')
+    if (tipo === 'sdr') secPix.classList.remove('hidden')
+  } else {
+    // tipo inválido
+    document.querySelector('.subtitle').textContent = 'Link inválido. Solicite um novo link ao responsável.'
+    document.getElementById('form').style.display = 'none'
+  }
+
+  document.getElementById('form').addEventListener('submit', async e => {
+    e.preventDefault()
+    const btn = document.getElementById('btnSubmit')
+    const msg = document.getElementById('msg')
+    btn.disabled = true
+    btn.textContent = 'Enviando...'
+    msg.className = 'msg'
+
+    const data = { tipo }
+    document.querySelectorAll('#form input, #form select').forEach(el => {
+      if (el.name && !el.closest('.hidden')) data[el.name] = el.value.trim()
+    })
+
+    try {
+      const res = await fetch('/submit', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data)
+      })
+      const result = await res.json()
+      if (!res.ok) throw new Error(result.error)
+
+      document.getElementById('formWrap').classList.add('hidden')
+      document.getElementById('doneState').classList.remove('hidden')
+    } catch (err) {
+      msg.textContent = '❌ ' + err.message
+      msg.className = 'msg error'
+      btn.disabled = false
+      btn.textContent = 'Enviar dados'
+    }
+  })
+</script>
+</body>
+</html>

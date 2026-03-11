@@ -1,0 +1,590 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Gerador de Contratos</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      background: #f4f6f9; color: #222;
+      min-height: 100vh; display: flex; align-items: flex-start;
+      justify-content: center; padding: 32px 16px 60px;
+    }
+    .container { background: #fff; border-radius: 12px; box-shadow: 0 2px 16px rgba(0,0,0,.08); width: 100%; max-width: 680px; overflow: hidden; }
+
+    /* ── Tabs ── */
+    .tabs { display: flex; border-bottom: 2px solid #eef0f4; }
+    .tab-btn {
+      flex: 1; padding: 15px 8px; background: none; border: none;
+      font-size: .88rem; font-weight: 600; color: #888; cursor: pointer;
+      border-bottom: 2px solid transparent; margin-bottom: -2px; transition: color .15s;
+    }
+    .tab-btn.active { color: #4a6cf7; border-bottom-color: #4a6cf7; }
+    .tab-pane { display: none; padding: 30px 40px 36px; }
+    .tab-pane.active { display: block; }
+
+    h2 { font-size: 1.05rem; font-weight: 700; margin-bottom: 4px; }
+    .subtitle { font-size: .83rem; color: #777; margin-bottom: 22px; line-height: 1.5; }
+
+    /* ── Upload ── */
+    .upload-area {
+      border: 2px dashed #d0d5e8; border-radius: 10px; padding: 32px 20px;
+      text-align: center; cursor: pointer; position: relative;
+      transition: border-color .15s, background .15s;
+    }
+    .upload-area:hover, .upload-area.drag { border-color: #4a6cf7; background: #f5f7ff; }
+    .upload-area input[type=file] { position: absolute; inset: 0; opacity: 0; cursor: pointer; }
+    .upload-icon { font-size: 2rem; margin-bottom: 8px; }
+    .upload-label { font-size: .93rem; font-weight: 600; color: #444; }
+    .upload-hint  { font-size: .78rem; color: #999; margin-top: 4px; }
+    .preview-wrap { margin-top: 14px; display: none; }
+    .preview-wrap img { max-width: 100%; border-radius: 8px; border: 1px solid #e0e4ee; }
+
+    /* ── Missing fields ── */
+    .missing-section {
+      margin-top: 20px; background: #fffbec; border: 1px solid #ffe9a0;
+      border-radius: 9px; padding: 16px 20px; display: none;
+    }
+    .missing-section h3 { font-size: .85rem; font-weight: 700; color: #8a6400; margin-bottom: 12px; }
+    .missing-section .field-group { margin-bottom: 12px; }
+
+    /* ── Buttons ── */
+    .btn-primary {
+      width: 100%; padding: 11px; background: #4a6cf7; color: #fff;
+      font-size: .93rem; font-weight: 600; border: none; border-radius: 8px;
+      cursor: pointer; margin-top: 14px; transition: background .15s; display: none;
+    }
+    .btn-primary:hover { background: #3a5be0; }
+    .btn-primary:disabled { background: #aab4d4; cursor: not-allowed; }
+
+    /* ── Share link ── */
+    .share-box {
+      background: #f5f7ff; border: 1px solid #c5cfff; border-radius: 9px;
+      padding: 16px 20px; margin-top: 18px; display: none;
+    }
+    .share-box h3 { font-size: .83rem; font-weight: 700; color: #3a5be0; margin-bottom: 10px; }
+    .share-tipo { display: flex; gap: 8px; margin-bottom: 12px; flex-wrap: wrap; }
+    .share-tipo select { flex: 1; padding: 8px 10px; border: 1px solid #c5cfff; border-radius: 6px; font-size: .88rem; }
+    .share-tipo button {
+      padding: 8px 16px; background: #4a6cf7; color: #fff; border: none;
+      border-radius: 6px; font-size: .88rem; font-weight: 600; cursor: pointer;
+      white-space: nowrap;
+    }
+    .share-tipo button:hover { background: #3a5be0; }
+    .share-url-wrap { display: none; }
+    .share-url {
+      display: flex; gap: 8px; align-items: center;
+      background: #fff; border: 1px solid #c5cfff; border-radius: 6px; padding: 8px 12px;
+      font-size: .85rem; word-break: break-all;
+    }
+    .share-url span { flex: 1; color: #333; }
+    .copy-btn {
+      padding: 4px 12px; background: #eef2ff; color: #3a5be0; border: none;
+      border-radius: 5px; font-size: .8rem; font-weight: 600; cursor: pointer; white-space: nowrap;
+    }
+    .copy-btn:hover { background: #dde5ff; }
+    .share-note { font-size: .76rem; color: #888; margin-top: 8px; }
+
+    /* ── Form fields ── */
+    .field-group { margin-bottom: 15px; }
+    label { display: block; font-size: .81rem; font-weight: 600; color: #555; margin-bottom: 4px; }
+    input, select {
+      width: 100%; padding: 9px 12px; border: 1px solid #d4d8e0; border-radius: 7px;
+      font-size: .92rem; color: #222; background: #fafbfc;
+      transition: border-color .15s; outline: none;
+    }
+    input:focus, select:focus { border-color: #4a6cf7; background: #fff; }
+    input.filled { border-color: #34c471; background: #f0fdf6; }
+    .section-title {
+      font-size: .74rem; font-weight: 700; text-transform: uppercase; letter-spacing: .06em;
+      color: #999; margin: 20px 0 11px; padding-bottom: 5px; border-bottom: 1px solid #f0f1f4;
+    }
+    .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 11px; }
+    .grid-3 { display: grid; grid-template-columns: 2fr 1fr 1fr; gap: 11px; }
+    .hidden { display: none !important; }
+
+    .btn-generate {
+      width: 100%; padding: 13px; background: #4a6cf7; color: #fff;
+      font-size: .98rem; font-weight: 600; border: none; border-radius: 8px;
+      cursor: pointer; margin-top: 24px; transition: background .15s, transform .1s;
+    }
+    .btn-generate:hover { background: #3a5be0; }
+    .btn-generate:active { transform: scale(.98); }
+    .btn-generate:disabled { background: #aab4d4; cursor: not-allowed; }
+
+    /* ── Messages ── */
+    .msg { margin-top: 12px; padding: 10px 14px; border-radius: 7px; font-size: .86rem; display: none; }
+    .msg.success { background: #e6f9ee; color: #1a6e3a; border: 1px solid #b3e8c6; display: block; }
+    .msg.error   { background: #fdecea; color: #c0392b; border: 1px solid #f5b4ae; display: block; }
+    .msg.info    { background: #eef2ff; color: #3a5be0; border: 1px solid #c5cfff; display: block; }
+    .msg.warn    { background: #fffbec; color: #8a6400; border: 1px solid #ffe9a0; display: block; }
+
+    /* ── Submissions ── */
+    .submission-card {
+      border: 1px solid #e8ebf4; border-radius: 9px; padding: 14px 18px;
+      margin-bottom: 12px; cursor: pointer; transition: border-color .15s, box-shadow .15s;
+    }
+    .submission-card:hover { border-color: #4a6cf7; box-shadow: 0 2px 8px rgba(74,108,247,.1); }
+    .submission-card .card-top { display: flex; justify-content: space-between; align-items: center; }
+    .submission-card .card-name { font-weight: 700; font-size: .93rem; }
+    .submission-card .card-tipo { font-size: .78rem; background: #eef2ff; color: #3a5be0; padding: 2px 8px; border-radius: 20px; }
+    .submission-card .card-date { font-size: .78rem; color: #999; margin-top: 4px; }
+    .submission-card .card-status { font-size: .78rem; color: #34c471; margin-top: 2px; }
+    .empty-state { text-align: center; padding: 32px 0; color: #aaa; font-size: .9rem; }
+  </style>
+</head>
+<body>
+<div class="container">
+
+  <div class="tabs">
+    <button class="tab-btn active" data-tab="tab-print">📸 Via Print</button>
+    <button class="tab-btn"        data-tab="tab-form">📝 Manual</button>
+    <button class="tab-btn"        data-tab="tab-link">🔗 Gerar Link</button>
+    <button class="tab-btn"        data-tab="tab-inbox">📥 Respostas <span id="badgeCount" style="display:none;background:#f04;color:#fff;border-radius:20px;padding:1px 7px;font-size:.72rem;margin-left:4px"></span></button>
+  </div>
+
+  <!-- ─── TAB 1: Print ClickUp ─── -->
+  <div class="tab-pane active" id="tab-print">
+    <h2>Importar dados do ClickUp</h2>
+    <p class="subtitle">Envie o print da tarefa — a IA extrai os dados e preenche o formulário.<br>Os campos que não forem encontrados aparecem abaixo para você completar.</p>
+
+    <div class="upload-area" id="uploadArea">
+      <input type="file" id="fileInput" accept="image/*" />
+      <div class="upload-icon">🖼️</div>
+      <div class="upload-label">Clique ou arraste o print aqui</div>
+      <div class="upload-hint">PNG, JPG, WEBP — máx. 20 MB</div>
+    </div>
+
+    <div class="preview-wrap" id="previewWrap"><img id="previewImg" src="" alt="Preview" /></div>
+    <button class="btn-primary" id="btnExtract">✨ Extrair dados com IA</button>
+    <div class="msg" id="msgExtract"></div>
+
+    <!-- Campos faltantes -->
+    <div class="missing-section" id="missingSec">
+      <h3>⚠️ Campos não encontrados no print — preencha manualmente:</h3>
+      <div id="missingFields"></div>
+      <button class="btn-primary" id="btnUseMissing" style="display:block;margin-top:8px">Usar dados e ir para formulário →</button>
+    </div>
+  </div>
+
+  <!-- ─── TAB 2: Formulário Manual ─── -->
+  <div class="tab-pane" id="tab-form">
+    <h2>Preencher contrato</h2>
+    <p class="subtitle">Selecione o tipo e preencha os dados para gerar o contrato.</p>
+
+    <form id="form">
+      <div class="field-group">
+        <label for="tipo">Tipo de contrato</label>
+        <select id="tipo" name="tipo" required>
+          <option value="">Selecione...</option>
+          <option value="gestor">Gestor de Tráfego Pago</option>
+          <option value="lider">Líder Técnico da Equipe Operacional</option>
+          <option value="vendedor">Vendedor (Closer) — Modelo OTE</option>
+          <option value="sdr">SDR — Modelo OTE</option>
+        </select>
+      </div>
+
+      <!-- Gestor / Líder -->
+      <div id="section-pj-full" class="hidden">
+        <div class="section-title">Dados da contratada (PJ)</div>
+        <div class="field-group"><label>Razão Social</label><input name="razao_social" placeholder="Ex: João Silva Serviços LTDA" /></div>
+        <div class="grid-2">
+          <div class="field-group"><label>CNPJ</label><input name="cnpj" placeholder="XX.XXX.XXX/0001-XX" /></div>
+          <div class="field-group"><label>CEP</label><input name="cep" placeholder="80.035-010" /></div>
+        </div>
+        <div class="field-group"><label>Endereço completo</label><input name="endereco" placeholder="Rua das Flores, 123, Juvevê, Curitiba/PR" /></div>
+
+        <div class="section-title">Representante Legal</div>
+        <div class="field-group"><label>Nome completo</label><input name="representante" placeholder="Ex: João da Silva" /></div>
+        <div class="grid-2">
+          <div class="field-group"><label>CPF</label><input name="cpf" placeholder="000.000.000-00" /></div>
+          <div class="field-group"><label>Telefone</label><input name="telefone" placeholder="(41) 99999-9999" /></div>
+        </div>
+        <div class="field-group"><label>E-mail</label><input name="email" type="email" placeholder="nome@gmail.com" /></div>
+
+        <div id="section-modalidade" class="hidden">
+          <div class="section-title">Modalidade</div>
+          <div class="field-group">
+            <label>Modalidade de trabalho</label>
+            <select name="modalidade">
+              <option value="presencial">Presencial</option>
+              <option value="home office">Home Office</option>
+              <option value="híbrido">Híbrido</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="section-title">Remuneração</div>
+        <div class="grid-2">
+          <div class="field-group"><label>Salário (R$)</label><input name="salario" placeholder="3.000,00" /></div>
+          <div class="field-group"><label>Salário por extenso</label><input name="salario_extenso" placeholder="três mil reais" /></div>
+        </div>
+        <div class="grid-2">
+          <div class="field-group"><label>Dia de pagamento (nº)</label><input name="dia_pagamento" placeholder="15" /></div>
+          <div class="field-group"><label>Dia de pagamento (extenso)</label><input name="dia_pagamento_extenso" placeholder="quinze" /></div>
+        </div>
+      </div>
+
+      <!-- Vendedor / SDR -->
+      <div id="section-pj-ote" class="hidden">
+        <div class="section-title">Dados da contratada (PJ)</div>
+        <div class="field-group"><label>Razão Social</label><input name="razao_social" placeholder="Ex: João Silva Serviços LTDA" /></div>
+        <div class="field-group"><label>CNPJ</label><input name="cnpj" placeholder="XX.XXX.XXX/0001-XX" /></div>
+        <div class="field-group"><label>Logradouro</label><input name="logradouro" placeholder="Rua das Flores" /></div>
+        <div class="grid-3">
+          <div class="field-group"><label>Bairro</label><input name="bairro" placeholder="Juvevê" /></div>
+          <div class="field-group"><label>Número</label><input name="numero" placeholder="123" /></div>
+          <div class="field-group"><label>CEP</label><input name="cep" placeholder="80.035-010" /></div>
+        </div>
+        <div class="grid-2">
+          <div class="field-group"><label>Cidade</label><input name="cidade" placeholder="Curitiba" /></div>
+          <div class="field-group"><label>UF</label><input name="uf" placeholder="PR" /></div>
+        </div>
+
+        <div class="section-title">Representante Legal</div>
+        <div class="field-group"><label>Nome completo</label><input name="representante" placeholder="Ex: João da Silva" /></div>
+        <div class="grid-2">
+          <div class="field-group"><label>CPF</label><input name="cpf" placeholder="000.000.000-00" /></div>
+          <div class="field-group"><label>WhatsApp</label><input name="whatsapp" placeholder="(41) 99999-9999" /></div>
+        </div>
+        <div class="field-group"><label>E-mail</label><input name="email" type="email" placeholder="nome@gmail.com" /></div>
+
+        <div id="section-pix" class="hidden">
+          <div class="section-title">Pagamento</div>
+          <div class="field-group"><label>Chave PIX</label><input name="chave_pix" placeholder="CPF, e-mail, telefone ou chave aleatória" /></div>
+        </div>
+      </div>
+
+      <!-- Data de assinatura -->
+      <div id="section-data" class="hidden">
+        <div class="section-title">Data de assinatura</div>
+        <div class="grid-3">
+          <div class="field-group">
+            <label>Mês</label>
+            <select name="mes_contrato">
+              <option value="janeiro">Janeiro</option><option value="fevereiro">Fevereiro</option>
+              <option value="março">Março</option><option value="abril">Abril</option>
+              <option value="maio">Maio</option><option value="junho">Junho</option>
+              <option value="julho">Julho</option><option value="agosto">Agosto</option>
+              <option value="setembro">Setembro</option><option value="outubro">Outubro</option>
+              <option value="novembro">Novembro</option><option value="dezembro">Dezembro</option>
+            </select>
+          </div>
+          <div class="field-group"><label>Dia</label><input name="dia_contrato" placeholder="15" /></div>
+          <div class="field-group"><label>Ano</label><input name="ano_contrato" value="2026" /></div>
+        </div>
+      </div>
+
+      <button type="submit" class="btn-generate hidden" id="btnGerar">⬇ Gerar e baixar contrato</button>
+      <div class="msg" id="msgForm"></div>
+    </form>
+  </div>
+
+  <!-- ─── TAB 3: Gerar Link ─── -->
+  <div class="tab-pane" id="tab-link">
+    <h2>Enviar formulário para a pessoa</h2>
+    <p class="subtitle">
+      Gere um link único para enviar à pessoa contratada.<br>
+      Ela preenche os dados dela e você finaliza com salário e data de pagamento.
+    </p>
+
+    <div class="share-box" style="display:block">
+      <h3>🔗 Selecione o tipo de contrato e gere o link</h3>
+      <div class="share-tipo">
+        <select id="shareTipo">
+          <option value="">Selecione o tipo...</option>
+          <option value="gestor">Gestor de Tráfego Pago</option>
+          <option value="lider">Líder Técnico da Equipe Operacional</option>
+          <option value="vendedor">Vendedor (Closer) — Modelo OTE</option>
+          <option value="sdr">SDR — Modelo OTE</option>
+        </select>
+        <button id="btnGerarLink">Gerar link público</button>
+      </div>
+
+      <div class="share-url-wrap" id="shareUrlWrap">
+        <div class="share-url">
+          <span id="shareUrlText"></span>
+          <button class="copy-btn" id="copyBtn">Copiar</button>
+        </div>
+        <div class="share-note">⚠️ O link fica ativo enquanto o servidor estiver rodando. Ao reiniciar, gere um novo link.</div>
+      </div>
+    </div>
+
+    <div class="msg" id="msgLink"></div>
+  </div>
+
+  <!-- ─── TAB 4: Respostas ─── -->
+  <div class="tab-pane" id="tab-inbox">
+    <h2>Respostas recebidas</h2>
+    <p class="subtitle">Clique em uma resposta para carregar os dados no formulário e gerar o contrato.</p>
+    <div id="submissionsList"></div>
+    <div class="msg" id="msgInbox"></div>
+  </div>
+
+</div>
+
+<script>
+// ── Utilitários ───────────────────────────────
+const $ = id => document.getElementById(id)
+
+// ── Tabs ──────────────────────────────────────
+document.querySelectorAll('.tab-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('.tab-btn, .tab-pane').forEach(el => el.classList.remove('active'))
+    btn.classList.add('active')
+    $(btn.dataset.tab).classList.add('active')
+    if (btn.dataset.tab === 'tab-inbox') loadSubmissions()
+  })
+})
+
+// ── Labels amigáveis ──────────────────────────
+const LABELS = {
+  razao_social:'Razão Social', cnpj:'CNPJ', representante:'Representante Legal',
+  cpf:'CPF', telefone:'Telefone', whatsapp:'WhatsApp', email:'E-mail',
+  endereco:'Endereço', logradouro:'Logradouro', numero:'Número', bairro:'Bairro',
+  cidade:'Cidade', uf:'UF', cep:'CEP', chave_pix:'Chave PIX',
+  modalidade:'Modalidade', salario:'Salário (R$)', salario_extenso:'Salário por extenso',
+  dia_pagamento:'Dia de pagamento', dia_pagamento_extenso:'Dia de pagamento (extenso)',
+  dia_contrato:'Dia de assinatura', mes_contrato:'Mês de assinatura', ano_contrato:'Ano'
+}
+
+// ── Upload / Preview ──────────────────────────
+const fileInput   = $('fileInput')
+const uploadArea  = $('uploadArea')
+const previewWrap = $('previewWrap')
+const previewImg  = $('previewImg')
+const btnExtract  = $('btnExtract')
+const msgExtract  = $('msgExtract')
+const missingSec  = $('missingSec')
+const missingFields = $('missingFields')
+
+let selectedFile   = null
+let extractedData  = {}
+
+uploadArea.addEventListener('dragover',  e => { e.preventDefault(); uploadArea.classList.add('drag') })
+uploadArea.addEventListener('dragleave', () => uploadArea.classList.remove('drag'))
+uploadArea.addEventListener('drop', e => {
+  e.preventDefault(); uploadArea.classList.remove('drag')
+  if (e.dataTransfer.files[0]) setFile(e.dataTransfer.files[0])
+})
+fileInput.addEventListener('change', () => { if (fileInput.files[0]) setFile(fileInput.files[0]) })
+
+function setFile(file) {
+  selectedFile = file
+  previewImg.src = URL.createObjectURL(file)
+  previewWrap.style.display = 'block'
+  btnExtract.style.display = 'block'
+  missingSec.style.display = 'none'
+  msgExtract.className = 'msg'
+}
+
+// ── Extrair dados com IA ──────────────────────
+btnExtract.addEventListener('click', async () => {
+  if (!selectedFile) return
+  btnExtract.disabled = true
+  btnExtract.textContent = '✨ Analisando imagem...'
+  msgExtract.className = 'msg info'
+  msgExtract.textContent = 'Enviando para IA... aguarde.'
+  msgExtract.style.display = 'block'
+
+  const fd = new FormData()
+  fd.append('imagem', selectedFile)
+
+  try {
+    const res  = await fetch('/extract', { method: 'POST', body: fd })
+    const body = await res.json()
+    if (!res.ok) throw new Error(body.error || 'Erro desconhecido')
+
+    extractedData = body.dados || {}
+    const faltando = body.faltando || []
+
+    // Mostrar campos faltantes
+    if (faltando.length > 0) {
+      missingFields.innerHTML = ''
+      faltando.forEach(campo => {
+        const div = document.createElement('div')
+        div.className = 'field-group'
+        div.innerHTML = `<label>${LABELS[campo] || campo}</label>
+          <input data-missing="${campo}" placeholder="Preencha manualmente" />`
+        missingFields.appendChild(div)
+      })
+      missingSec.style.display = 'block'
+      msgExtract.className = 'msg warn'
+      msgExtract.textContent = `⚠️ ${faltando.length} campo(s) não encontrado(s) no print. Preencha abaixo.`
+    } else {
+      missingSec.style.display = 'none'
+      aplicarDadosEIrParaForm(extractedData)
+    }
+  } catch (err) {
+    msgExtract.className = 'msg error'
+    msgExtract.textContent = '❌ ' + err.message
+  } finally {
+    btnExtract.disabled = false
+    btnExtract.textContent = '✨ Extrair dados com IA'
+  }
+})
+
+// ── Botão "usar dados com campos manuais" ──────
+$('btnUseMissing').addEventListener('click', () => {
+  // Coletar campos manuais preenchidos
+  document.querySelectorAll('[data-missing]').forEach(el => {
+    if (el.value.trim()) extractedData[el.dataset.missing] = el.value.trim()
+  })
+  aplicarDadosEIrParaForm(extractedData)
+})
+
+function aplicarDadosEIrParaForm(dados) {
+  // Setar tipo
+  if (dados.tipo_contrato) {
+    $('tipo').value = dados.tipo_contrato
+    $('tipo').dispatchEvent(new Event('change'))
+  }
+  // Preencher campos
+  Object.entries(dados).forEach(([key, val]) => {
+    if (key === 'tipo_contrato') return
+    document.querySelectorAll(`#form [name="${key}"]`).forEach(el => {
+      el.value = val
+      el.classList.add('filled')
+    })
+  })
+  // Ir para aba do formulário
+  document.querySelectorAll('.tab-btn, .tab-pane').forEach(el => el.classList.remove('active'))
+  document.querySelector('[data-tab="tab-form"]').classList.add('active')
+  $('tab-form').classList.add('active')
+}
+
+// ── Tipo de contrato → seções ─────────────────
+const tipoSel = $('tipo')
+tipoSel.addEventListener('change', () => {
+  const v = tipoSel.value
+  $('section-pj-full').classList.toggle('hidden', !['gestor','lider'].includes(v))
+  $('section-pj-ote').classList.toggle('hidden',  !['vendedor','sdr'].includes(v))
+  $('section-modalidade').classList.toggle('hidden', v !== 'gestor')
+  $('section-pix').classList.toggle('hidden',    v !== 'sdr')
+  $('section-data').classList.toggle('hidden',   !v)
+  $('btnGerar').classList.toggle('hidden',       !v)
+  $('msgForm').className = 'msg'
+})
+
+// ── Gerar contrato ────────────────────────────
+$('form').addEventListener('submit', async e => {
+  e.preventDefault()
+  const btn = $('btnGerar')
+  btn.disabled = true
+  btn.textContent = 'Gerando...'
+  $('msgForm').className = 'msg'
+
+  const data = { tipo: tipoSel.value }
+  document.querySelectorAll('#form input, #form select').forEach(el => {
+    if (el.name && el.name !== 'tipo' && !el.closest('.hidden')) data[el.name] = el.value.trim()
+  })
+
+  try {
+    const res = await fetch('/generate', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(data)
+    })
+    if (!res.ok) { const e = await res.json(); throw new Error(e.error) }
+    const blob = await res.blob()
+    const url  = URL.createObjectURL(blob)
+    const a    = document.createElement('a')
+    a.href     = url
+    a.download = res.headers.get('content-disposition')?.match(/filename="(.+)"/)?.[1] || `contrato-${data.tipo}.docx`
+    a.click()
+    URL.revokeObjectURL(url)
+    $('msgForm').textContent = '✅ Contrato gerado e baixado!'
+    $('msgForm').className   = 'msg success'
+  } catch (err) {
+    $('msgForm').textContent = '❌ ' + err.message
+    $('msgForm').className   = 'msg error'
+  } finally {
+    btn.disabled = false
+    btn.textContent = '⬇ Gerar e baixar contrato'
+  }
+})
+
+// ── Gerar link público (localtunnel) ──────────
+$('btnGerarLink').addEventListener('click', async () => {
+  const tipo = $('shareTipo').value
+  if (!tipo) { $('msgLink').textContent = 'Selecione o tipo de contrato.'; $('msgLink').className = 'msg warn'; return }
+
+  $('btnGerarLink').disabled = true
+  $('btnGerarLink').textContent = 'Gerando...'
+  $('msgLink').className = 'msg info'
+  $('msgLink').textContent = 'Criando link público... pode levar alguns segundos.'
+  $('msgLink').style.display = 'block'
+
+  try {
+    const res  = await fetch('/tunnel', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ tipo }) })
+    const body = await res.json()
+    if (!res.ok) throw new Error(body.error)
+
+    $('shareUrlText').textContent = body.url
+    $('shareUrlWrap').style.display = 'block'
+    $('msgLink').className = 'msg success'
+    $('msgLink').textContent = '✅ Link gerado! Copie e envie para a pessoa contratada.'
+  } catch (err) {
+    $('msgLink').textContent = '❌ ' + err.message
+    $('msgLink').className   = 'msg error'
+  } finally {
+    $('btnGerarLink').disabled = false
+    $('btnGerarLink').textContent = 'Gerar link público'
+  }
+})
+
+$('copyBtn').addEventListener('click', () => {
+  navigator.clipboard.writeText($('shareUrlText').textContent)
+  $('copyBtn').textContent = 'Copiado!'
+  setTimeout(() => { $('copyBtn').textContent = 'Copiar' }, 2000)
+})
+
+// ── Carregar respostas ─────────────────────────
+async function loadSubmissions() {
+  const list = $('submissionsList')
+  list.innerHTML = '<div style="color:#aaa;text-align:center;padding:20px">Carregando...</div>'
+  try {
+    const res  = await fetch('/submissions')
+    const data = await res.json()
+    if (data.length === 0) {
+      list.innerHTML = '<div class="empty-state">📭 Nenhuma resposta recebida ainda.</div>'
+      $('badgeCount').style.display = 'none'
+      return
+    }
+    $('badgeCount').textContent = data.length
+    $('badgeCount').style.display = 'inline'
+    list.innerHTML = data.map(s => `
+      <div class="submission-card" onclick="loadSubmission('${s.id}')">
+        <div class="card-top">
+          <span class="card-name">${s.fields.razao_social || s.fields.representante || 'Sem nome'}</span>
+          <span class="card-tipo">${s.tipo}</span>
+        </div>
+        <div class="card-date">${new Date(s.criadoEm).toLocaleString('pt-BR')}</div>
+      </div>
+    `).join('')
+  } catch (err) {
+    list.innerHTML = '<div class="empty-state">❌ Erro ao carregar respostas.</div>'
+  }
+}
+
+async function loadSubmission(id) {
+  const res  = await fetch(`/submission/${id}`)
+  const sub  = await res.json()
+
+  aplicarDadosEIrParaForm({ tipo_contrato: sub.tipo, ...sub.fields })
+
+  $('msgForm').textContent = '📥 Dados carregados da resposta. Adicione salário e data e gere o contrato.'
+  $('msgForm').className   = 'msg info'
+  $('msgForm').style.display = 'block'
+}
+
+// Badge na carga inicial
+fetch('/submissions').then(r => r.json()).then(data => {
+  if (data.length > 0) {
+    $('badgeCount').textContent = data.length
+    $('badgeCount').style.display = 'inline'
+  }
+})
+</script>
+</body>
+</html>
