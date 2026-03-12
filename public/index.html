@@ -49,31 +49,43 @@
       align-items: center;
       padding: 0 16px 72px;
     }
+    body > .topbar { margin: 0 -16px; width: calc(100% + 32px); max-width: none; align-self: stretch; }
 
     /* ── Topbar ── */
     .topbar {
-      width: 100%; max-width: 700px;
-      padding: 28px 0 20px;
+      width: 100%;
+      background: var(--dark);
+      padding: 0 32px;
       display: flex;
       align-items: center;
-      justify-content: space-between;
+      gap: 24px;
+      height: 54px;
+      flex-shrink: 0;
     }
     .brand {
-      display: flex; align-items: center; gap: 10px;
+      display: flex; align-items: center; gap: 10px; text-decoration: none;
     }
     .brand-icon {
-      width: 36px; height: 36px;
-      background: var(--dark);
-      border-radius: 9px;
+      width: 28px; height: 28px;
+      background: var(--gold);
+      border-radius: 6px;
       display: flex; align-items: center; justify-content: center;
-      font-size: 1rem;
+      font-size: .8rem;
     }
     .brand-name {
-      font-size: 1rem; font-weight: 800;
-      color: var(--dark); letter-spacing: .06em; text-transform: uppercase;
+      font-size: .85rem; font-weight: 800;
+      color: #fff; letter-spacing: .07em; text-transform: uppercase;
     }
-    .brand-sep { color: var(--text-3); font-size: .8rem; margin: 0 2px; }
-    .brand-sub { font-size: .72rem; font-weight: 500; color: var(--text-3); text-transform: uppercase; letter-spacing: .08em; }
+    .brand-sep { display: none; }
+    .brand-sub { display: none; }
+    .topbar-nav { display: flex; gap: 4px; }
+    .topbar-nav a {
+      padding: 6px 14px; border-radius: 6px;
+      font-size: .8rem; font-weight: 600; color: rgba(255,255,255,.55);
+      text-decoration: none; transition: color .15s, background .15s;
+    }
+    .topbar-nav a:hover { color: #fff; background: rgba(255,255,255,.07); }
+    .topbar-nav a.active { color: var(--gold); background: rgba(201,168,76,.1); }
 
     /* ── Container ── */
     .container {
@@ -257,15 +269,13 @@
 <body>
 
 <div class="topbar">
-  <div class="brand">
+  <a href="/" class="brand">
     <div class="brand-icon">📄</div>
     <span class="brand-name">Laquila</span>
-    <span class="brand-sep">·</span>
-    <span class="brand-sub">Contratos</span>
-  </div>
-  <nav style="margin-left:24px;display:flex;gap:4px;">
-    <a href="/" style="padding:5px 12px;border-radius:6px;font-size:.78rem;font-weight:600;color:var(--gold);background:rgba(201,168,76,.1);text-decoration:none;">Contratos</a>
-    <a href="/triagem" style="padding:5px 12px;border-radius:6px;font-size:.78rem;font-weight:600;color:rgba(255,255,255,.55);text-decoration:none;" onmouseover="this.style.color='#fff';this.style.background='rgba(255,255,255,.07)'" onmouseout="this.style.color='rgba(255,255,255,.55)';this.style.background='none'">Triagem</a>
+  </a>
+  <nav class="topbar-nav">
+    <a href="/" class="active">Contratos</a>
+    <a href="/triagem">Triagem</a>
   </nav>
 </div>
 
