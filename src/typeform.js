@@ -1,6 +1,7 @@
 const TYPEFORM_API = 'https://api.typeform.com'
 const TOKEN = process.env.TYPEFORM_TOKEN
 
+// Apenas formulários ativos para triagem
 const FORM_CONFIG = {
   ZQPMxCEn: {
     title:            'Head de Tráfego',
@@ -8,6 +9,7 @@ const FORM_CONFIG = {
     salary_field:     'kI5wawu1NBu6',
     experience_field: 'FyA88KT7hfEY',
     video_field:      'J0Eavq0Rgou2',
+    role_context:     'Gestor de Tráfego Pago — responsável por gestão de campanhas pagas (Meta, Google Ads), análise de métricas e otimização de resultados para clientes da agência.',
   },
   nBEOq4tP: {
     title:            'Closer',
@@ -15,22 +17,12 @@ const FORM_CONFIG = {
     salary_field:     '3NLjJR2omG2R',
     experience_field: 'TXDQhsi20TMh',
     video_field:      null,
-  },
-  gjfsnD3q: {
-    title:            'Assistente Financeiro',
-    salary_ceiling:   2000,
-    salary_field:     'SVPabHkdpTGn',
-    experience_field: '1ADuqTDTTFvo',
-    video_field:      'dFWL6JzNvypT',
-  },
-  LG8GYmVZ: {
-    title:            'Atendente',
-    salary_ceiling:   2000,
-    salary_field:     '9dqQ75tccv5a',
-    experience_field: 'vgsFwWHthTnF',
-    video_field:      'HwLCaaqYGNOn',
+    role_context:     'Closer de Vendas — responsável por conduzir reuniões 1x1, fechar contratos de alto valor, lidar com objeções e bater metas de vendas em ambiente de pressão.',
   },
 }
+
+// Filtro de data: fevereiro 2026 até hoje
+const DATE_SINCE = '2026-02-01T00:00:00Z'
 
 async function tfFetch(path) {
   const res = await fetch(`${TYPEFORM_API}${path}`, {
@@ -112,7 +104,7 @@ async function getFormResponses(formId, pageSize = 200) {
 
   const [formDef, responsesData] = await Promise.all([
     tfFetch(`/forms/${formId}`),
-    tfFetch(`/forms/${formId}/responses?page_size=${pageSize}&sort_by=submitted_at&order=desc`),
+    tfFetch(`/forms/${formId}/responses?page_size=${pageSize}&sort_by=submitted_at&order=desc&since=${DATE_SINCE}`),
   ])
 
   const fields = formDef.fields || []
@@ -141,6 +133,7 @@ async function getFormResponses(formId, pageSize = 200) {
       submitted_at:   item.submitted_at,
       form_id:        formId,
       form_title:     config.title,
+      role_context:   config.role_context,
       name:           extractName(answers, fields),
       contact:        extractContact(answers, fields),
       salary_raw:     extractText(salaryAns),

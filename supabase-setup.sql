@@ -35,6 +35,7 @@ create table if not exists candidates (
   text_answers     jsonb default '[]',
   submitted_at     timestamptz,
   status           text default 'pendente',
+  ai_analysis      jsonb default null,
   updated_at       timestamptz default now()
 );
 

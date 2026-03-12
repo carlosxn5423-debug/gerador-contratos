@@ -10,6 +10,7 @@ const fs                            = require('fs')
 const { getClient }                 = require('./supabase')
 const { getFormResponses, listHiringForms } = require('./typeform')
 const { scoreCandidate }            = require('./scorer')
+const { analyzeCandidate }          = require('./analyzer')
 
 const app    = express()
 const upload = multer({ storage: multer.memoryStorage(), limits: { fileSize: 20 * 1024 * 1024 } })
@@ -182,6 +183,32 @@ app.get('/triagem/candidates/:formId', async (req, res) => {
     }
 
     res.json(scored)
+  } catch (err) {
+    console.error(err)
+    res.status(500).json({ error: err.message })
+  }
+})
+
+// ─────────────────────────────────────────────
+// POST /triagem/candidate/:id/analyze — análise com IA
+// ─────────────────────────────────────────────
+app.post('/triagem/candidate/:id/analyze', async (req, res) => {
+  const { candidate } = req.body
+  if (!candidate) return res.status(400).json({ error: 'Dados do candidato não enviados' })
+
+  try {
+    const analysis = await analyzeCandidate(candidate)
+
+    // Salva no Supabase se disponível
+    const sb = getClient()
+    if (sb) {
+      await sb.from('candidates').upsert(
+        { id: req.params.id, ai_analysis: analysis },
+        { onConflict: 'id' }
+      )
+    }
+
+    res.json(analysis)
   } catch (err) {
     console.error(err)
     res.status(500).json({ error: err.message })
