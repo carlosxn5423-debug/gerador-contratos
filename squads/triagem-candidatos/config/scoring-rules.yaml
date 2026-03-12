@@ -1,0 +1,27 @@
+# Regras de scoring por critério
+weights:
+  salary: 30        # Pretensão salarial vs teto do cargo
+  experience: 25    # Tem experiência na área (multiple_choice Sim/Não)
+  quality: 25       # Qualidade/extensão das respostas abertas
+  video: 20         # Link de vídeo presente e válido
+
+thresholds:
+  schedule_meeting: 75   # >= 75: ✅ Agendar reunião
+  review: 50             # 50-74: 🟡 Revisar (assistir vídeo)
+  reject: 0              # < 50:  ❌ Não prosseguir
+
+salary_bands:
+  # Pontuação baseada em % acima do teto do cargo
+  within_ceiling:   30   # <= teto
+  up_to_20pct:      20   # até 20% acima
+  up_to_50pct:      10   # até 50% acima
+  above_50pct:       0   # mais de 50% acima
+  unknown:          15   # não informou / não parseável
+
+quality_bands:
+  # Pontuação baseada em média de palavras por resposta aberta
+  words_30_plus:    25
+  words_15_to_30:   18
+  words_8_to_15:    10
+  words_below_8:     5
+  no_answers:        0

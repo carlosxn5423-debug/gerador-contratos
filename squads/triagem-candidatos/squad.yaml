@@ -1,0 +1,56 @@
+name: triagem-candidatos
+version: "1.0.0"
+description: "Squad para triagem automática de candidatos via Typeform com scoring e gestão de decisões"
+domain: hr-screening
+author: Laquila Marketing
+
+agents:
+  - id: triagem-analyst
+    file: agents/triagem-analyst.md
+    role: Analisa respostas do Typeform e calcula score dos candidatos
+
+tasks:
+  - name: score-candidate
+    file: tasks/score-candidate.md
+    agent: triagem-analyst
+  - name: fetch-candidates
+    file: tasks/fetch-candidates.md
+    agent: triagem-analyst
+
+config:
+  - scoring-rules.yaml
+
+integrations:
+  - typeform
+  - supabase
+
+stack:
+  backend: node/express
+  frontend: vanilla-js
+  database: supabase
+
+forms:
+  - id: ZQPMxCEn
+    title: "Head de Tráfego"
+    salary_ceiling: 1700
+    salary_field: kI5wawu1NBu6
+    experience_field: FyA88KT7hfEY
+    video_field: J0Eavq0Rgou2
+  - id: nBEOq4tP
+    title: "Closer"
+    salary_ceiling: 5000
+    salary_field: "3NLjJR2omG2R"
+    experience_field: TXDQhsi20TMh
+    video_field: null
+  - id: gjfsnD3q
+    title: "Assistente Financeiro"
+    salary_ceiling: 2000
+    salary_field: SVPabHkdpTGn
+    experience_field: 1ADuqTDTTFvo
+    video_field: dFWL6JzNvypT
+  - id: LG8GYmVZ
+    title: "Atendente"
+    salary_ceiling: 2000
+    salary_field: 9dqQ75tccv5a
+    experience_field: vgsFwWHthTnF
+    video_field: HwLCaaqYGNOn

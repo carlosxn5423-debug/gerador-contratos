@@ -8,6 +8,8 @@ const { randomUUID: uuidv4 }        = require('crypto')
 const path                          = require('path')
 const fs                            = require('fs')
 const { getClient }                 = require('./supabase')
+const { getFormResponses, listHiringForms } = require('./typeform')
+const { scoreCandidate }            = require('./scorer')
 
 const app    = express()
 const upload = multer({ storage: multer.memoryStorage(), limits: { fileSize: 20 * 1024 * 1024 } })
@@ -125,6 +127,83 @@ app.post('/generate', (req, res) => {
 })
 
 
+
+// ─────────────────────────────────────────────
+// GET /triagem — página de triagem
+// ─────────────────────────────────────────────
+app.get('/triagem', (_req, res) => {
+  res.sendFile(path.join(__dirname, '../public/triagem.html'))
+})
+
+// ─────────────────────────────────────────────
+// GET /triagem/forms — lista formulários configurados
+// ─────────────────────────────────────────────
+app.get('/triagem/forms', async (_req, res) => {
+  try {
+    const forms = await listHiringForms()
+    res.json(forms)
+  } catch (err) {
+    res.status(500).json({ error: err.message })
+  }
+})
+
+// ─────────────────────────────────────────────
+// GET /triagem/candidates/:formId — candidatos com score
+// ─────────────────────────────────────────────
+app.get('/triagem/candidates/:formId', async (req, res) => {
+  if (!process.env.TYPEFORM_TOKEN)
+    return res.status(500).json({ error: 'TYPEFORM_TOKEN não configurado' })
+
+  try {
+    const raw       = await getFormResponses(req.params.formId)
+    const scored    = raw.map(scoreCandidate)
+    scored.sort((a, b) => b.score - a.score)
+
+    // Salva/atualiza no Supabase se disponível
+    const sb = getClient()
+    if (sb) {
+      const rows = scored.map(c => ({
+        id:             c.response_id,
+        form_id:        c.form_id,
+        form_title:     c.form_title,
+        name:           c.name,
+        email:          c.contact.email,
+        phone:          c.contact.phone,
+        score:          c.score,
+        score_breakdown: c.score_breakdown,
+        decision:       c.decision.label,
+        salary_raw:     c.salary_raw,
+        video_url:      c.video_url,
+        text_answers:   c.text_answers,
+        submitted_at:   c.submitted_at,
+        status:         'pendente',
+      }))
+      await sb.from('candidates').upsert(rows, { onConflict: 'id' })
+    }
+
+    res.json(scored)
+  } catch (err) {
+    console.error(err)
+    res.status(500).json({ error: err.message })
+  }
+})
+
+// ─────────────────────────────────────────────
+// PATCH /triagem/candidate/:id/status — atualiza decisão manual
+// ─────────────────────────────────────────────
+app.patch('/triagem/candidate/:id/status', async (req, res) => {
+  const { status } = req.body
+  const allowed = ['Agendar reunião', 'Revisar', 'Não prosseguir']
+  if (!allowed.includes(status))
+    return res.status(400).json({ error: 'Status inválido' })
+
+  const sb = getClient()
+  if (sb) {
+    const { error } = await sb.from('candidates').update({ decision: status }).eq('id', req.params.id)
+    if (error) return res.status(500).json({ error: error.message })
+  }
+  res.json({ ok: true })
+})
 
 // ─────────────────────────────────────────────
 // GET /fill/:tipo — formulário externo
