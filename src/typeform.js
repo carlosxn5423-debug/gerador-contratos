@@ -4,12 +4,11 @@ const TOKEN = process.env.TYPEFORM_TOKEN
 // Apenas formulários ativos para triagem
 const FORM_CONFIG = {
   ZQPMxCEn: {
-    title:            'Head de Tráfego',
+    title:            'Gestor de Tráfego',
     salary_ceiling:   1700,
     salary_field:     'kI5wawu1NBu6',
     experience_field: 'FyA88KT7hfEY',
     video_field:      'J0Eavq0Rgou2',
-    role_context:     'Gestor de Tráfego Pago — responsável por gestão de campanhas pagas (Meta, Google Ads), análise de métricas e otimização de resultados para clientes da agência.',
   },
   nBEOq4tP: {
     title:            'Closer',
@@ -17,7 +16,6 @@ const FORM_CONFIG = {
     salary_field:     '3NLjJR2omG2R',
     experience_field: 'TXDQhsi20TMh',
     video_field:      null,
-    role_context:     'Closer de Vendas — responsável por conduzir reuniões 1x1, fechar contratos de alto valor, lidar com objeções e bater metas de vendas em ambiente de pressão.',
   },
 }
 
@@ -133,7 +131,6 @@ async function getFormResponses(formId, pageSize = 200) {
       submitted_at:   item.submitted_at,
       form_id:        formId,
       form_title:     config.title,
-      role_context:   config.role_context,
       name:           extractName(answers, fields),
       contact:        extractContact(answers, fields),
       salary_raw:     extractText(salaryAns),

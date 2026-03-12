@@ -231,41 +231,6 @@
     .score-row:last-child { border-bottom: none; }
     .score-row .label { color: var(--text-2); }
     .score-row .val { font-weight: 700; }
-    /* ── IA analysis ── */
-    .ia-btn {
-      display: inline-flex; align-items: center; gap: 7px;
-      padding: 8px 16px; border-radius: var(--radius-sm);
-      background: var(--dark); color: var(--gold);
-      font-family: inherit; font-size: .8rem; font-weight: 700;
-      border: none; cursor: pointer; transition: background .15s;
-    }
-    .ia-btn:hover { background: #2a271f; }
-    .ia-btn:disabled { background: #d1cec7; color: #a89d8e; cursor: not-allowed; }
-    .ia-result {
-      margin-top: 14px; padding: 14px 16px;
-      background: var(--gold-bg); border: 1px solid var(--gold-border);
-      border-radius: var(--radius-sm);
-    }
-    .ia-resumo { font-size: .84rem; color: var(--text); line-height: 1.6; margin-bottom: 12px; }
-    .ia-row { display: flex; gap: 12px; margin-bottom: 10px; flex-wrap: wrap; }
-    .ia-col { flex: 1; min-width: 140px; }
-    .ia-col-title { font-size: .65rem; font-weight: 700; text-transform: uppercase; letter-spacing: .08em; color: var(--text-3); margin-bottom: 5px; }
-    .ia-tag {
-      display: inline-block; padding: 2px 8px; border-radius: 20px;
-      font-size: .72rem; font-weight: 600; margin: 2px 2px 2px 0;
-    }
-    .ia-tag.green  { background: var(--green-bg);  color: #15803d; }
-    .ia-tag.red    { background: var(--red-bg);    color: #b91c1c; }
-    .ia-recomendacao { font-size: .8rem; color: var(--text-2); font-style: italic; margin-top: 8px; line-height: 1.5; }
-    .ia-score-wrap { display: flex; align-items: center; gap: 8px; margin-bottom: 8px; }
-    .ia-score-num { font-size: 1.3rem; font-weight: 800; color: var(--dark); }
-    .ia-fit-badge {
-      padding: 2px 10px; border-radius: 20px; font-size: .72rem; font-weight: 700;
-    }
-    .ia-fit-alto   { background: var(--green-bg);  color: #15803d; border: 1px solid var(--green-border); }
-    .ia-fit-medio  { background: var(--yellow-bg); color: #92400e; border: 1px solid var(--yellow-border); }
-    .ia-fit-baixo  { background: var(--red-bg);    color: #b91c1c; border: 1px solid var(--red-border); }
-
     .decision-selector { display: flex; gap: 8px; margin-top: 12px; flex-wrap: wrap; }
     .decision-btn {
       padding: 7px 14px; border-radius: 20px; border: 1.5px solid var(--border);
@@ -503,14 +468,6 @@
       </div>
 
       <div class="modal-section">
-        <div class="modal-section-title">Análise com IA</div>
-        <button class="ia-btn" id="iaBtn" onclick="requestAiAnalysis('${c.response_id}')">
-          ✦ Analisar com IA
-        </button>
-        <div id="iaResult"></div>
-      </div>
-
-      <div class="modal-section">
         <div class="modal-section-title">Alterar decisão</div>
         <div class="decision-selector">
           <button class="decision-btn ${c.decision.label === 'Agendar reunião' ? 'active-green' : ''}"
@@ -572,59 +529,6 @@
 
   function escHtml(str) {
     return String(str || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;')
-  }
-
-  // ── Análise IA ───────────────────────────────────────────────────
-  async function requestAiAnalysis(responseId) {
-    const c   = allCandidates.find(x => x.response_id === responseId)
-    const btn = document.getElementById('iaBtn')
-    const box = document.getElementById('iaResult')
-    if (!c || !btn) return
-
-    btn.disabled = true
-    btn.textContent = '⏳ Analisando...'
-    box.innerHTML = ''
-
-    try {
-      const res  = await fetch(`/triagem/candidate/${responseId}/analyze`, {
-        method:  'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body:    JSON.stringify({ candidate: c }),
-      })
-      const data = await res.json()
-      if (!res.ok) throw new Error(data.error)
-
-      const fitClass = data.fit_cargo === 'Alto' ? 'ia-fit-alto' : data.fit_cargo === 'Médio' ? 'ia-fit-medio' : 'ia-fit-baixo'
-      const fortes   = (data.pontos_fortes  || []).map(p => `<span class="ia-tag green">${escHtml(p)}</span>`).join('')
-      const atencao  = (data.pontos_atencao || []).map(p => `<span class="ia-tag red">${escHtml(p)}</span>`).join('')
-
-      box.innerHTML = `
-        <div class="ia-result">
-          <div class="ia-score-wrap">
-            <span class="ia-score-num">${data.score_ia}/10</span>
-            <span class="ia-fit-badge ${fitClass}">Fit ${data.fit_cargo}</span>
-          </div>
-          <div class="ia-resumo">${escHtml(data.resumo)}</div>
-          <div class="ia-row">
-            <div class="ia-col">
-              <div class="ia-col-title">Pontos fortes</div>
-              ${fortes || '<span style="color:var(--text-3);font-size:.75rem">—</span>'}
-            </div>
-            <div class="ia-col">
-              <div class="ia-col-title">Atenção</div>
-              ${atencao || '<span style="color:var(--text-3);font-size:.75rem">—</span>'}
-            </div>
-          </div>
-          <div class="ia-recomendacao">💬 ${escHtml(data.recomendacao)}</div>
-        </div>`
-
-      btn.textContent = '✦ Reanalisar'
-      btn.disabled = false
-    } catch (err) {
-      box.innerHTML = `<div style="color:#b91c1c;font-size:.8rem;margin-top:8px">Erro: ${escHtml(err.message)}</div>`
-      btn.textContent = '✦ Tentar novamente'
-      btn.disabled = false
-    }
   }
 
   // ── Init ─────────────────────────────────────────────────────────
