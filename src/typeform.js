@@ -21,8 +21,8 @@ const FORM_CONFIG = {
   },
 }
 
-// Filtro de data: fevereiro 2026 até hoje
-const DATE_SINCE = '2026-02-01T00:00:00Z'
+// Filtro de data: janeiro 2025 até hoje (cobre todo histórico relevante)
+const DATE_SINCE = '2025-01-01T00:00:00Z'
 
 async function tfFetch(path) {
   const res = await fetch(`${TYPEFORM_API}${path}`, {
